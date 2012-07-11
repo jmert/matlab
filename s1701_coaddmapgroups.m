@@ -95,7 +95,7 @@ function jobs=s1701_coaddmapgroups()
         ], body);
 
     % Write the output to the block.js file
-    fid = fopen('blocks.js', 'w');
+    fid = fopen('binned20.js', 'w');
     fprintf(fid, jsonstr);
     fclose(fid);
     % }}}
