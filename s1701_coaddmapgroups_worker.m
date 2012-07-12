@@ -1,5 +1,5 @@
-function s1701_coaddmapgroups_worker(tags, blocknum)
-%s1701_coaddmapgroups_worker
+function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
+%s1701_coaddmapgroups_worker(tags, blocknum, prefix)
 %
 %The worker for S1701_COADDMAPGROUPS. This function should not be called
 %directly, but rather from S1701_COADDMAPGROUPS which does the work of farming
@@ -9,6 +9,9 @@ function s1701_coaddmapgroups_worker(tags, blocknum)
 %    TAGS        A cell of tags which constitute a single group
 %    BLOCKNUM    The block (group) number which will be used to identify this
 %                run as well as label the output files and maps.
+%    PREFIX      The file name prefix to use for the output of all maps. Each
+%                will be saved with the name according to
+%                    sprintf('%s_%03i.png', PREFIX, BLOCKNUM)
 
     % Set several "global" variables for use by this an any subfunctions
     sernum   = '1701real';
@@ -26,7 +29,7 @@ function s1701_coaddmapgroups_worker(tags, blocknum)
     coaddopt.weight    = 3;
     coaddopt.gs        = mapopt.gs;
     coaddopt.proj      = mapopt.proj;
-    coaddopt.daughter  = sprintf('block%03i', blocknum);
+    coaddopt.daughter  = sprintf('%s_%03i', prefix, blocknum);
     disp('Co-adding pairmaps...')
     reduc_coaddpairmaps(tags, coaddopt);
 

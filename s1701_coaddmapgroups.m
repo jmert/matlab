@@ -1,21 +1,33 @@
-function jobs=s1701_coaddmapgroups()
+function jobs=s1701_coaddmapgroups(bintype,binextra)
 %jobs=s1701_coaddmapgroups()
 %
 %Create a set of coadded maps based on different groupings of tags by farming
 %the pairmap making, coadding, and plotting operations to the cluster.
+%
+%INPUTS
+%    BINTYPE    The type of grouping to perform on the tags. See GROUPTAGS for
+%               a list of the supported binning types.
+%    BINEXTRA   The extra data to pass on to GROUPTAGS. See GROUPTAGS for more
+%               information on this option.
+%
+%OUTPUTS
+%    JOBS       A cell array of all the jobs which were submitted with FARMIT
 
     ARGS   = '';
     MEMORY = 6000;              % Specified in MB
     JOBLIM = 20;                % Concurrent nodes to run
     GROUP  = '/BICEP2_willmert/coaddmapgroups';
-    XHOSTS = {'airoldi03'};     % Hack to skip problematic hosts
+%    XHOSTS = {'airoldi03'};     % Hack to skip problematic hosts
+    XHOSTS = {};
 
     jobs = {};
 
     % Retrieve all the tags which have been processed
-    taggroups = grouptags('cmb2012',{'has_tod'},'binned',20);
+    [taggroups,uid] = grouptags('cmb2012',{'has_tod'},bintype,binextra);
 
-    %{
+    keyboard
+    taggroups = taggroups(end);
+
     %%%% Farming setup {{{
     % Ignore certain hosts if they're giving us problems.
     if length(XHOSTS) > 0
@@ -48,14 +60,13 @@ function jobs=s1701_coaddmapgroups()
 
         jobname = sprintf('block%03i', blocknum);
         jobs{end+1} = farmit('farmfiles',...
-               's1701_coaddmapgroups_worker(thisgroup,blocknum);',...
-               'var',{'thisgroup','blocknum'},...
+               's1701_coaddmapgroups_worker(thisgroup,blocknum,uid);',...
+               'var',{'thisgroup','blocknum','uid'},...
                'jobname',jobname,...
                'group',GROUP,...
                'args',ARGS);
 
     end
-    %}
 
     %%%% Metadata output {{{
     % Then write out some extra metadata which is used by the pager webpage to
@@ -71,7 +82,7 @@ function jobs=s1701_coaddmapgroups()
 
         % The components which make up the JSON object
         name    = sprintf('Block #%03i', idx);
-        imgfile = sprintf('block%03i.png', idx);
+        imgfile = sprintf('%s_%03i.png', uid, idx);
         intags  = sprintf('"%s",', taggroups{idx}{:});
         intags  = intags(1:end-1); % Remove trailing ','
 
@@ -95,7 +106,7 @@ function jobs=s1701_coaddmapgroups()
         ], body);
 
     % Write the output to the block.js file
-    fid = fopen('binned20.js', 'w');
+    fid = fopen([uid '.js'], 'w');
     fprintf(fid, jsonstr);
     fclose(fid);
     % }}}
