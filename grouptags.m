@@ -1,5 +1,5 @@
-function groups=grouptags(set,flags,divtype,extra)
-%groups=grouptags(set,flags,divtype,extra)
+function [groups,uid]=grouptags(set,flags,divtype,extra)
+%[groups,uid]=grouptags(set,flags,divtype,extra)
 %
 %Separates tags into various groups based on a given criterion.
 %
@@ -38,9 +38,14 @@ function groups=grouptags(set,flags,divtype,extra)
 %OUTPUT
 %    GROUPS     A cell array with each element a group. Each group is then a
 %               a cell array of the constituent tags.
+%    UID        A unique string id which is constructed by the appropriate
+%               divisioning algorithm. For example, the 'binned' type also takes
+%               an extra integer, so it can return to the user a value of
+%               'binned10' if the integer 10 was passed as extra data. This
+%               allows for arbitrary formatting of more complex options.
 %
 %EXAMPLE
-%    groups = grouptags('cmb2012', {'has_tod'}, 'binned', 10);
+%    [groups,uid] = grouptags('cmb2012', {'has_tod'}, 'binned', 10);
 
     if ~exist('divtype','var')
         divtype = [];
@@ -76,6 +81,10 @@ function groups=grouptags(set,flags,divtype,extra)
                 groups{end+1} = tags(start:ends);
                 % Then delete the group we just saved and repeat
                 tags = tags((ends(1)+1):end);
+
+                % Also remember to set the unique string. Since there are no
+                % options here, just return 'perdaydeck'
+                uid = 'perdaydeck';
             end
         case 'binned'
             % If the extra data is not specified, assume we want to bin with
@@ -92,7 +101,12 @@ function groups=grouptags(set,flags,divtype,extra)
             if length(tags) > 0
                 groups{end+1} = tags(1:end);
             end
+
+            % Construct the unique string from 'binned' + the number of tags
+            % combined for each bin.
+            uid = sprintf('binned%i', extra);
         otherwise
             error('Unrecognized divisioning option');
     end
 end
+
