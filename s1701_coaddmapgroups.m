@@ -1,5 +1,5 @@
 function jobs=s1701_coaddmapgroups(bintype,binextra)
-%jobs=s1701_coaddmapgroups()
+%jobs=s1701_coaddmapgroups(bintype,binextra)
 %
 %Create a set of coadded maps based on different groupings of tags by farming
 %the pairmap making, coadding, and plotting operations to the cluster.
