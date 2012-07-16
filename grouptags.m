@@ -4,7 +4,9 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 %Separates tags into various groups based on a given criterion.
 %
 %INPUTS
-%    SET        The tag set to use. This is passed directly to get_tags.
+%    SET        The tag set to use. If a single string, this is passed directly
+%               to GET_TAGS, otherwise a cell array is looped over and each
+%               return from GET_TAGS is appended to the internal list in order.
 %    FLAGS      The flags which are passed onto get_tags.
 %    DIVTYPE    The method of dividing the retrieved tags into groups. Currently
 %               implemented are the options:
@@ -61,7 +63,14 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
     groups  = {};
 
     % Start by getting a list of all tags using
-    tags = get_tags(set, flags);
+    tags = {};
+    if ~iscell(set)
+        tags = get_tags(set, flags);
+    else
+        for i=1:length(set)
+            tags = [tags get_tags(set{i}, flags)];
+        end
+    end
 
     % Now start divisioning them
     switch divtype
