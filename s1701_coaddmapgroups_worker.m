@@ -14,8 +14,9 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
 %                    sprintf('%s_%03i.png', PREFIX, BLOCKNUM)
 
     % Set several "global" variables for use by this an any subfunctions
-    sernum   = '1701real';
-    mapopt   = get_default_mapopt( struct('sernum',sernum) );
+    CBARRANGE = [-250 250];
+    sernum    = '1701real';
+    mapopt    = get_default_mapopt( struct('sernum',sernum) );
 
     disp('Initializing pairmaps...')
     s1701_prepare_pairmaps(tags);
@@ -33,7 +34,7 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
     disp('Co-adding pairmaps...')
     reduc_coaddpairmaps(tags, coaddopt);
 
-    %%%% Map file name generation
+    %%%% Map file name generation {{{
     % Do some nasty setup for generating the map file name. These bits have
     % been pulled from reduc_coaddpairmaps and may be subject to breaking if
     % the file structure is changed.
@@ -58,6 +59,7 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
     mapfile = sprintf('maps/%s/%s_%s_%s_jack%d%s.mat',...
                 sernum(1:4),sernum(5:end),coaddopt.daughter,fileext,...
                 coaddopt.jacktype,coaddtype);
+    % }}}
 
     % Load the data and apply nominal calibrations
     data = load(mapfile);
@@ -65,50 +67,56 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
     calfactor = get_ukpervolt();
     map = cal_coadd_maps(map, calfactor);
 
-    % Now actually start plotting the the maps
+    % Now actually start plotting the the maps {{{
     h = figure('Visible','off');
-%    h = figure();
     colormap jet
-    plotsize(h, 1300, 1900, 'pixels');
+    plotsize(h, 1500, 300, 'pixels');
 
-    subplot(3,1, 1);
-    imagesc(m.x_tic, m.y_tic, map.T, [-250 250]);
-    daspect([m.xdos m.ydos 1]);
+    % Set a bunch of defaults
+    set(h, 'DefaultAxesLooseInset',[0 0 0 0]);
+    set(h, 'DefaultAxesCLim', CBARRANGE);
+    set(h, 'DefaultAxesFontSize', 10);
+    setappdata(gcf, 'SubplotDefaultAxesLocation', [0.03, 0.05, 0.92, 0.85]);
+
+    % Plot T
+    Tax = subplot(1,3, 1);
+    imagesc(m.x_tic, m.y_tic, map.T, CBARRANGE);
+    Taxbar = colorbar('eastoutside');
     title('150 Ghz T (\muK)');
     xlabel('RA');
     ylabel('Dec');
 
-    subplot(3,1, 2);
-    imagesc(m.x_tic, m.y_tic, map.Q, [-250 250]);
-    daspect([m.xdos m.ydos 1]);
+    % Plot Q
+    Qax = subplot(1,3, 2);
+    imagesc(m.x_tic, m.y_tic, map.Q, CBARRANGE);
+    Qaxbar = colorbar('eastoutside');
     title('150 Ghz Q (\muK)');
     xlabel('RA');
     ylabel('Dec');
-    
-    subplot(3,1, 3);
-    imagesc(m.x_tic, m.y_tic, map.U, [-250 250]);
-    daspect([m.xdos m.ydos 1]);
+
+    % Plot U
+    Uax = subplot(1,3, 3);
+    imagesc(m.x_tic, m.y_tic, map.U, CBARRANGE);
+    Uaxbar = colorbar('eastoutside');
     title('150 Ghz U (\muK)');
     xlabel('RA');
     ylabel('Dec');
+    % }}}
 
-    axes('Position',[.1 .1 .9 .85],'Visible','off');
-    % Put the common colorbar off to the left
-    caxis([-250 250]);
-    colorbar('Location','WestOutside');
-
-    % Then output the figure
+    %%%% Then output the figure {{{
     if ~exist('pagermaps','dir')
         mkdir('pagermaps')
     end
     outputfile = ['pagermaps/' coaddopt.daughter '.png'];
-    export_fig('-png','-a2','-painters',outputfile)
+    mkpng(outputfile, true);
+
+    % }}}
 
     % Cleanup
     delete(h);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % AUXILIARY FUNCTIONS
+    %%% AUXILIARY FUNCTIONS {{{
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     function s1701_prepare_pairmaps(tags)
@@ -136,5 +144,7 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
         reduc_makepairmaps(gentags, mapopt);
 
     end %function s1701_prepare_pairmaps
+
+    %%%% }}}
 
 end %function s1701_coaddmapgroups_worker
