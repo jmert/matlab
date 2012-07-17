@@ -90,7 +90,7 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 
     % Now start divisioning them
     switch divtype
-        case 'perdaydeck'
+        case 'perdaydeck' % {{{
             while length(tags) > 0
                 % Get the first deck angle
                 deck = tags{1}((end-4):end);
@@ -111,29 +111,59 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
                 % options here, just return 'perdaydeck'
                 uid = 'perdaydeck';
             end
-        case 'binned'
+        % }}}
+        case 'binned' % {{{
             % If the extra data is not specified, assume we want to bin with
             % 10 tags at a time.
             if isempty(extra)
                 extra = 10;
             end
-            % Then make groups which are each extra tags in length
-            while length(tags) > extra
-                groups{end+1} = tags(1:extra);
-                tags = tags((extra+1):end);
-            end
-            % Take up any extra stragglers
-            if length(tags) > 0
-                groups{end+1} = tags(1:end);
-            end
-
+            % Call the helper to actually perform the binning
+            groups = bintags(tags, extra);
             % Construct the unique string from 'binned' + the number of tags
             % combined for each bin.
             uid = sprintf('binned%i', extra);
-        case 'resistanceratio'
-
+        % }}}
+        case 'resistanceratio' % {{{
+        % }}}
         otherwise
             error('Unrecognized divisioning option');
+    end
+
+end
+
+function groups=bintags(intags, binsize)
+%groups=bintags(intags, binsize)
+%
+%Divides a list of tags into a number of groups of a given bin size.
+%
+%The ability to simply bin a list of tags together into a set of groups is
+%generically useful (i.e. for farming operations across a cluster), so the
+%function is exposed for use by other grouping algorithms as a helper function.
+%
+%INPUTS
+%    INTAGS       List of input tags to operate upon
+%    BINSIZE      Size of each bin to generate
+%
+%OUTPUT
+%    BINNEDGRPS   The output cell array of groups of tags
+%
+%EXAMPLE
+%    farmsets = do_binning(alltags, 20);
+
+    if ~isnumeric(binsize) || binsize < 0
+        error('bintags: Invalid binning size');
+    end
+
+    groups = {};
+    % Make groups which are each binsize in length
+    while length(intags) > binsize
+        groups{end+1} = intags(1:binsize);
+        intags = tags((binsize+1):end);
+    end
+    % Take up any extra stragglers
+    if length(intags) > 0
+        groups{end+1} = tags(1:end);
     end
 end
 
