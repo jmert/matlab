@@ -27,6 +27,14 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 %                      tags may not be evenly divisible by N. See the EXTRA
 %                      option for more information.
 %
+%                   3. resistanceratio
+%                      Takes the ratio of the operating resistance of the
+%                      detectors versus their resistance in the normal state
+%                      to derive the ratio r = R_s / R_n. The value is derived
+%                      from reading in all corresponding *_calval.mat files.
+%                      Once collected, the tags are then sorted by r and binned
+%                      according to the value passed into EXTRA.
+%
 %    EXTRA      Any extra information which may necessary for one of the
 %               binning algorithms described above.
 %
@@ -36,6 +44,14 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 %                   2. binned
 %                      Scalar integer expected which prescribes N, the number
 %                      of tags to be placed in each bin.
+%
+%                   3. resistanceratio
+%                      Scalar integer stating the number of bins to be created.
+%                      All r values (see above for definition) should nominally
+%                      exist between 0 and 1, and the value of EXTRA prescribes
+%                      the number of bins within that ratio.
+%                        NOTE: All tags which have r < 0 or r > 1 are
+%                              automatically excluded.
 %
 %OUTPUT
 %    GROUPS     A cell array with each element a group. Each group is then a
@@ -114,6 +130,8 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
             % Construct the unique string from 'binned' + the number of tags
             % combined for each bin.
             uid = sprintf('binned%i', extra);
+        case 'resistanceratio'
+
         otherwise
             error('Unrecognized divisioning option');
     end
