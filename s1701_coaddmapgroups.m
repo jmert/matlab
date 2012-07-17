@@ -23,10 +23,8 @@ function jobs=s1701_coaddmapgroups(bintype,binextra)
     jobs = {};
 
     % Retrieve all the tags which have been processed
-    [taggroups,uid] = grouptags('cmb2012',{'has_tod'},bintype,binextra);
-
-    keyboard
-    taggroups = taggroups(end);
+    [taggroups,uid] = grouptags({'cmb2010','cmb2011'},{'has_tod'},...
+            bintype,binextra);
 
     %%%% Farming setup {{{
     % Ignore certain hosts if they're giving us problems.
