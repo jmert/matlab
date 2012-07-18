@@ -54,7 +54,7 @@ function grouptags_collect_resistanceratio(tags,outfile)
     p   = [];
     ind = [];
 
-    fprintf('Collecting R_s/R_n values for %i tags...', length(tags));
+    fprintf('Collecting R_s/R_n values for %i tags...\n', length(tags));
 
     % Now for each tag, accumulate the required data.
     for i=1:length(tags)
