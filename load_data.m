@@ -20,8 +20,9 @@ function data=load_data(tag, product, vars, varargin)
 %               file.
 %
 %EXAMPLES
-%    mapopt = get_default_mapopt( struct('sernum',1701) );
-%    mapdat = load_data('20100424E04_dk068', 'map', mapopt);
+%    cals = load_data('20100424E04_dk068', 'calval', {'en','lc'});
+%      - or -
+%    mapdat = load_data('', 'map', '*', coaddopt);
 %    imagesc(mapdat.map.T);
 %
 %DATA PRODUCTS
@@ -51,6 +52,9 @@ function data=load_data(tag, product, vars, varargin)
 %               serial number as usual, and the JACKTYPE field must be a single
 %               scalar (the default coaddopt specifies all jackknife types)
 %               since a given map type must be chosen.
+%            -- NOTE: The map type does not directly use a tag value anywhere
+%               in choosing the file to load, so here an empty string is
+%               permitted.
 %
 %NOTES
 %    1. LOAD_DATA will warn if any variables listed in VARS are unknown for the
