@@ -34,35 +34,8 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
     disp('Co-adding pairmaps...')
     reduc_coaddpairmaps(tags, coaddopt);
 
-    %%%% Map file name generation {{{
-    % Do some nasty setup for generating the map file name. These bits have
-    % been pulled from reduc_coaddpairmaps and may be subject to breaking if
-    % the file structure is changed.
-    if(coaddopt.gs == 1)
-        gs = '_gs';
-    else
-        gs = '';
-    end 
-    if ~strcmp(coaddopt.proj,'radec')
-        proj = ['_' coaddopt.proj];
-    else
-        proj = '';
-    end
-    if(coaddopt.coaddtype>0)
-        coaddtype=sprintf('%1d',coaddopt.coaddtype);
-    else
-        coaddtype='';
-    end
-
-    fileext = sprintf('filt%s_weight%1d%s%s',...
-                coaddopt.filt,coaddopt.weight,gs,proj);
-    mapfile = sprintf('maps/%s/%s_%s_%s_jack%d%s.mat',...
-                sernum(1:4),sernum(5:end),coaddopt.daughter,fileext,...
-                coaddopt.jacktype,coaddtype);
-    % }}}
-
     % Load the data and apply nominal calibrations
-    data = load(mapfile);
+    data = load_data('','map',{'m','map'},coaddopt);
     map = data.map; m = data.m;
     calfactor = get_ukpervolt();
     map = cal_coadd_maps(map, calfactor);
