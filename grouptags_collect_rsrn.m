@@ -1,15 +1,15 @@
-function grouptags_collect_resistanceratio(tags,outfile)
-%grouptags_collect_resistanceratio(tags,outfile)
+function grouptags_collect_rsrn(tags,outfile)
+%grouptags_collect_rsrn(tags,outfile)
 %
 %Collect the information for the R_s and R_n values for a list of tags from
 %their *_calval.mat files, and save the collated data to disk. This function is
-%required to be run before GROUPTAGS with a binning type of 'resistanceratio'
+%required to be run before GROUPTAGS with a binning type of 'rsrn'
 %can be performed.
 %
 %INPUTS
-%    TAGS   
+%    TAGS      A cell array of the tags to collect the R_s/R_n values for
 %    OUTFILE   A filename specifying where to output the collected data.
-%              Defaults to 'grouptags_resistanceratio.mat' in the current
+%              Defaults to 'grouptags_rsrn.mat' in the current
 %              directory.
 %
 %OUTPUTS
@@ -18,17 +18,17 @@ function grouptags_collect_resistanceratio(tags,outfile)
 %EXAMPLES
 %    tags = get_tags('cmb2011',{'has_tod','has_cuts'});
 %    outfile = 'grp_1701.mat';
-%    grouptags_collect_resistanceratio(tags, outfile);
+%    grouptags_collect_rsrn(tags, outfile);
 %    numbins = 10;
 %    groups = grouptags('cmb2011', {'has_tod','has_cuts'},...
-%                       'resistanceratio', numbins, outfile);
+%                       'rsrn', numbins, outfile);
 %
 
     if ~exist('outfile','var')
         outfile = [];
     end
     if isempty(outfile)
-        outfile = 'grouptags_resistanceratio.mat';
+        outfile = 'grouptags_rsrn.mat';
     end
 
     % Preallocate the memory required to increase performance. Do this by
@@ -55,9 +55,12 @@ function grouptags_collect_resistanceratio(tags,outfile)
     ind = [];
 
     fprintf('Collecting R_s/R_n values for %i tags...\n', length(tags));
+    tic
 
     % Now for each tag, accumulate the required data.
     for i=1:length(tags)
+
+        fprintf('\t%s\n', tags{i});
 
         % Possibly reload the [p,ind] structures if necessary
         this_date = str2num(tags{i}(1:8));
@@ -86,5 +89,8 @@ function grouptags_collect_resistanceratio(tags,outfile)
         calvals(i).rgl_rsrn = nanmean(calvals(i).rsrn(:,ind.rgl), 2);
     end
 
+    fprintf('Writing output to %s...\n', outfile);
     save(outfile, 'tags', 'calvals');
+
+    toc
 end
