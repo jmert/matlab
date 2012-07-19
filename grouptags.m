@@ -27,7 +27,7 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 %                      tags may not be evenly divisible by N. See the EXTRA
 %                      option for more information.
 %
-%                   3. resistanceratio
+%                   3. rsrn
 %                      Takes the ratio of the operating resistance of the
 %                      detectors versus their resistance in the normal state
 %                      to derive the ratio r = R_s / R_n. The value is derived
@@ -45,13 +45,13 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 %                      Scalar integer expected which prescribes N, the number
 %                      of tags to be placed in each bin.
 %
-%                   3. resistanceratio
-%                      Scalar integer stating the number of bins to be created.
-%                      All r values (see above for definition) should nominally
-%                      exist between 0 and 1, and the value of EXTRA prescribes
-%                      the number of bins within that ratio.
+%                   3. rsrn
+%                      A scalar integer stating the number of bins to be
+%                      created. All r values (see above for definition) should
+%                      nominally exist between 0 and 1, and the value of EXTRA
+%                      prescribes the number of bins within that range.
 %                        NOTE: All tags which have r < 0 or r > 1 are
-%                              automatically excluded.
+%                        automatically excluded.
 %
 %OUTPUT
 %    GROUPS     A cell array with each element a group. Each group is then a
@@ -116,6 +116,7 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
             % If the extra data is not specified, assume we want to bin with
             % 10 tags at a time.
             if isempty(extra)
+                disp('grouptags [binned]: Defaulting to 10 bins');
                 extra = 10;
             end
             % Call the helper to actually perform the binning
@@ -124,7 +125,88 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
             % combined for each bin.
             uid = sprintf('binned%i', extra);
         % }}}
-        case 'resistanceratio' % {{{
+        case 'rsrn' % {{{
+            % First verify that our inputs are correct. No use in continuing
+            % if the operation will fail later.
+            if isempty(extra)
+                disp('grouptags [rsrn]: Defaulting to 250 bins');
+                extra = 250;
+            end
+            if ~isnumeric(extra)
+                error('grouptags [rsrn]: Number of bins must be an integer');
+            end
+
+
+            if ~exist('grouptags_rsrn.mat','file')
+                % If no save file exists, just generate the data
+                grouptags_collect_rsrn(tags);
+            else
+                % Otherwise if it does, see if we can short-circuit this step
+                % by first loading only the tags and seeing if they correspond
+                % with each other. If they do, then we can again assume the
+                % data is OK.
+                saved = load('grouptags_rsrn.mat','tags');
+                % Compare the lengths of each string first, then if they are
+                % the same, continue by comparing each string. If no match
+                % returns a false, then we can skip this step
+                if length(saved.tags) ~= length(tags) || ...
+                   length(find(cellfun(@isequal,saved.tags,tags)==false)) ~= 0
+                    grouptags_collect_rsrn(tags);
+                end
+                saved = [];
+            end
+
+            % Now load all up-to-date data and start binning
+            datfile = load('grouptags_rsrn.mat');
+            initcount = size(datfile.tags,2);
+
+            % For now, ignore any tags which did not have two load curves (and
+            % therefore don't have two rgl_rsrn values).
+            sizes = arrayfun(@(x) size(x.lc.g,1), datfile.calvals);
+            probs = find(sizes ~= 2);
+            datfile.tags(probs)    = [];
+            datfile.calvals(probs) = [];
+
+            % Collect all rgl_rsrn values into a 2xX array
+            tags = datfile.tags;
+            rsrn = [datfile.calvals(:).rgl_rsrn];
+
+            % Remove entries with NaN values
+            nans = [ find(isnan(rsrn(1,:))) , find(isnan(rsrn(2,:))) ];
+            tags(nans)   = [];
+            rsrn(:,nans) = [];
+
+            % Remove any tags where r<0 or r>1
+            ltzero = [ find(rsrn(1,:) < 0) , find(rsrn(2,:) < 0) ];
+            tags(ltzero)   = [];
+            rsrn(:,ltzero) = [];
+
+            gtone = [ find(rsrn(1,:) > 1) , find(rsrn(2,:) > 1) ];
+            tags(gtone)   = [];
+            rsrn(:,gtone) = [];
+
+            finalcount = size(tags,2);
+            fprintf(['%i (%2.2f%%) tags remain after filtering:\n'...
+                     '\tN ~= 2: %i\n'...
+                     '\t NaN''s: %i\n'...
+                     '\t r < 0: %i\n'...
+                     '\t r > 1: %i\n'],...
+                    finalcount, 100*finalcount/initcount,...
+                    length(probs),length(nans),length(ltzero),length(gtone));
+
+            % Choose the bin bounds based on the number of bins requested.
+            % Add one since linspace will give N data points, but we want N
+            % spaces between (N+1) bounds.
+            bounds = linspace(0,1,extra+1);
+            for i=2:length(bounds)
+                % Find each R_s/R_n number which is between the two bounds
+                % (left inclusive)
+                list = find(bounds(i-1)<=rsrn(1,:) & rsrn(1,:)<bounds(i));
+                groups{end+1} = tags(list);
+            end
+
+            % Finally, construct the string identifier for this type of binning
+            uid = sprintf('rsrn%i',extra);
         % }}}
         otherwise
             error('Unrecognized divisioning option');
