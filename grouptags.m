@@ -46,10 +46,9 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 %                      of tags to be placed in each bin.
 %
 %                   3. rsrn
-%                      A scalar integer stating the number of bins to be
-%                      created. All r values (see above for definition) should
-%                      nominally exist between 0 and 1, and the value of EXTRA
-%                      prescribes the number of bins within that range.
+%                      A scalar integer stating the size of bins to be created.
+%                      All r values (see above for definition) should nominally
+%                      exist between 0 and 1.
 %                        NOTE: All tags which have r < 0 or r > 1 are
 %                        automatically excluded.
 %
@@ -194,16 +193,15 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
                     finalcount, 100*finalcount/initcount,...
                     length(probs),length(nans),length(ltzero),length(gtone));
 
-            % Choose the bin bounds based on the number of bins requested.
-            % Add one since linspace will give N data points, but we want N
-            % spaces between (N+1) bounds.
-            bounds = linspace(0,1,extra+1);
-            for i=2:length(bounds)
-                % Find each R_s/R_n number which is between the two bounds
-                % (left inclusive)
-                list = find(bounds(i-1)<=rsrn(1,:) & rsrn(1,:)<bounds(i));
-                groups{end+1} = tags(list);
-            end
+            % Sort the R_s/R_n values so that we can division them into equally
+            % sized groups.
+            [rsrn_sorted1,perm1] = sort(rsrn(1,:));
+            [rsrn_sorted2,perm2] = sort(rsrn(2,:));
+            tags1 = tags(perm1);
+            tags2 = tags(perm2);
+
+            % Then split the list of tags into binned groups
+            groups = bintags(tags1, extra);
 
             % Finally, construct the string identifier for this type of binning
             uid = sprintf('rsrn%i',extra);
@@ -231,7 +229,7 @@ function groups=bintags(intags, binsize)
 %    BINNEDGRPS   The output cell array of groups of tags
 %
 %EXAMPLE
-%    farmsets = do_binning(alltags, 20);
+%    farmsets = bintags(alltags, 20);
 
     if ~isnumeric(binsize) || binsize < 0
         error('bintags: Invalid binning size');
@@ -241,11 +239,11 @@ function groups=bintags(intags, binsize)
     % Make groups which are each binsize in length
     while length(intags) > binsize
         groups{end+1} = intags(1:binsize);
-        intags = tags((binsize+1):end);
+        intags = intags((binsize+1):end);
     end
     % Take up any extra stragglers
     if length(intags) > 0
-        groups{end+1} = tags(1:end);
+        groups{end+1} = intags(1:end);
     end
 end
 
