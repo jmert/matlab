@@ -84,9 +84,12 @@ function [groups,uid,data]=grouptags(set,flags,divtype,extra)
 %                        e. rsrn_groups
 %                           Cell array of groups of R_s/R_n values corresponding
 %                           to each group output in GROUPS.
-%                        f. alltags
+%                        f. indx_groups
+%                           Group of index arrays into ALLTAGS and ALLRSRN which
+%                           correspond to each group in GROUPS.
+%                        g. alltags
 %                           The list of all tags in chronological order
-%                        g. allrsrn
+%                        h. allrsrn
 %                           The array of all r values in chronological order.
 %
 %EXAMPLE
@@ -231,12 +234,14 @@ function [groups,uid,data]=grouptags(set,flags,divtype,extra)
             % Then split the list of tags into binned groups
             groups = bintags(tags1, extra);
             % Also reuse the machinery of bintags to create corresponding
-            % groups of the R_s/R_n values.
+            % groups of the R_s/R_n values and their indices into the allrsrn
+            % array
             data.rsrn_groups = bintags(rsrn_sorted1, extra);
+            data.indx_groups = bintags(perm1, extra);
 
             % Save all tags and R_s/R_n values to the extra data array.
             data.alltags = tags;
-            data.allrsrn = rsrn;
+            data.allrsrn = rsrn(1,:);
 
             % Finally, construct the string identifier for this type of binning
             uid = sprintf('rsrn%i',extra);
