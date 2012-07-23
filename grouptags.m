@@ -1,4 +1,4 @@
-function [groups,uid]=grouptags(set,flags,divtype,extra)
+function [groups,uid,data]=grouptags(set,flags,divtype,extra)
 %[groups,uid]=grouptags(set,flags,divtype,extra)
 %
 %Separates tags into various groups based on a given criterion.
@@ -60,6 +60,34 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 %               an extra integer, so it can return to the user a value of
 %               'binned10' if the integer 10 was passed as extra data. This
 %               allows for arbitrary formatting of more complex options.
+%    DATA       An output of any extra information which may be useful to the
+%               caller. This will typically hold information which was used to
+%               perform the various binning processes.
+%
+%                   1. perdaydeck
+%                      None
+%
+%                   2. binned
+%                      None
+%
+%                   3. rsrn
+%                      A structure containing the following members:
+%                        a. prob_tags
+%                           List of tags removed because the tag does not have
+%                           exactly two partial load curves.
+%                        b. nans
+%                           List of tags removed because r = NaN.
+%                        c. ltzero
+%                           List of tags removed because r < 0.
+%                        d. gtone
+%                           List of tags removed because r > 0.
+%                        e. rsrn_groups
+%                           Cell array of groups of R_s/R_n values corresponding
+%                           to each group output in GROUPS.
+%                        f. alltags
+%                           The list of all tags in chronological order
+%                        g. allrsrn
+%                           The array of all r values in chronological order.
 %
 %EXAMPLE
 %    [groups,uid] = grouptags('cmb2012', {'has_tod'}, 'binned', 10);
@@ -76,6 +104,7 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
     end
 
     groups  = {};
+    data    = struct();
 
     % Start by getting a list of all tags using
     tags = {};
@@ -160,9 +189,11 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
             initcount = size(datfile.tags,2);
 
             % For now, ignore any tags which did not have two load curves (and
-            % therefore don't have two rgl_rsrn values).
+            % therefore don't have two rgl_rsrn values). Also save the problem
+            % tags the output data structure.
             sizes = arrayfun(@(x) size(x.lc.g,1), datfile.calvals);
             probs = find(sizes ~= 2);
+            data.prob_tags = datfile.tags(probs);
             datfile.tags(probs)    = [];
             datfile.calvals(probs) = [];
 
@@ -170,19 +201,16 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
             tags = datfile.tags;
             rsrn = [datfile.calvals(:).rgl_rsrn];
 
-            % Remove entries with NaN values
-            nans = [ find(isnan(rsrn(1,:))) , find(isnan(rsrn(2,:))) ];
-            tags(nans)   = [];
-            rsrn(:,nans) = [];
-
-            % Remove any tags where r<0 or r>1
+            % Remove entries with NaN values and r<0 or r>1
+            nans   = [ find(isnan(rsrn(1,:))) , find(isnan(rsrn(2,:))) ];
             ltzero = [ find(rsrn(1,:) < 0) , find(rsrn(2,:) < 0) ];
-            tags(ltzero)   = [];
-            rsrn(:,ltzero) = [];
-
-            gtone = [ find(rsrn(1,:) > 1) , find(rsrn(2,:) > 1) ];
-            tags(gtone)   = [];
-            rsrn(:,gtone) = [];
+            gtone  = [ find(rsrn(1,:) > 1) , find(rsrn(2,:) > 1) ];
+            rmall  = [ nans ltzero gtone ];
+            data.nans   = tags(nans);
+            data.ltzero = tags(ltzero);
+            data.gtone  = tags(gtone);
+            tags(rmall)   = [];
+            rsrn(:,rmall) = [];
 
             finalcount = size(tags,2);
             fprintf(['%i (%2.2f%%) tags remain after filtering:\n'...
@@ -202,6 +230,13 @@ function [groups,uid]=grouptags(set,flags,divtype,extra)
 
             % Then split the list of tags into binned groups
             groups = bintags(tags1, extra);
+            % Also reuse the machinery of bintags to create corresponding
+            % groups of the R_s/R_n values.
+            data.rsrn_groups = bintags(rsrn_sorted1, extra);
+
+            % Save all tags and R_s/R_n values to the extra data array.
+            data.alltags = tags;
+            data.allrsrn = rsrn;
 
             % Finally, construct the string identifier for this type of binning
             uid = sprintf('rsrn%i',extra);
