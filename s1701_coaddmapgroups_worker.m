@@ -1,5 +1,5 @@
-function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
-%s1701_coaddmapgroups_worker(tags, blocknum, prefix)
+function s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
+%s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
 %
 %The worker for S1701_COADDMAPGROUPS. This function should not be called
 %directly, but rather from S1701_COADDMAPGROUPS which does the work of farming
@@ -12,6 +12,11 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
 %    PREFIX      The file name prefix to use for the output of all maps. Each
 %                will be saved with the name according to
 %                    sprintf('%s_%03i.png', PREFIX, BLOCKNUM)
+%    AUXFN       A function handle to an auxiliary plotting function. This
+%                allows for a generic farming script despite wanting binning
+%                type-specific plotting.
+%    AUXDATA     Auxiliary data which is used by the function given in AUXFN.
+%                The data should be the output data from GROUPTAGS.
 
     % Set several "global" variables for use by this an any subfunctions
     CBARRANGE = [-250 250];
@@ -40,7 +45,7 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
     calfactor = get_ukpervolt();
     map = cal_coadd_maps(map, calfactor);
 
-    % Now actually start plotting the the maps {{{
+    %%%% Now actually start plotting the the maps {{{
     h = figure('Visible','off');
     colormap jet
     plotsize(h, 1500, 300, 'pixels');
@@ -74,6 +79,10 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix)
     title('150 Ghz U (\muK)');
     xlabel('RA');
     ylabel('Dec');
+
+    % Also call the auxiliary plotting function
+    auxfn(tags,blocknum,prefix,auxdata);
+
     % }}}
 
     %%%% Then output the figure {{{
