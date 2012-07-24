@@ -28,7 +28,7 @@ function data=load_data(tag, product, vars, varargin)
 %DATA PRODUCTS
 %    A specific data product is loaded by passing an appropriate named to
 %    PRODUCT. Depending on the product, some extra information may be required
-%    to load the data: this data is passed as position-independent parameters
+%    to load the data: this data is passed as position-dependent parameters
 %    following PRODUCT in the call.
 %
 %    The following data products are currently supported and can be used as a
@@ -36,6 +36,7 @@ function data=load_data(tag, product, vars, varargin)
 %
 %        calval    Computed calibration factors
 %        map       Coadded maps
+%        tod       Raw time-ordered-data stream
 %
 %
 %    The following listing describes any position-dependent parameters required
@@ -55,6 +56,8 @@ function data=load_data(tag, product, vars, varargin)
 %            -- NOTE: The map type does not directly use a tag value anywhere
 %               in choosing the file to load, so here an empty string is
 %               permitted.
+%         tod
+%            None
 %
 %NOTES
 %    1. LOAD_DATA will warn if any variables listed in VARS are unknown for the
@@ -158,6 +161,14 @@ function data=load_data(tag, product, vars, varargin)
                         coaddopt.jacktype,coaddtype);
 
             % Finally load the data
+            data = load('-mat', filename, vars{:});
+        % }}}
+        case 'tod' % {{{
+            check_nargin(numargin, 0, 'tod');
+            check_vars(vars, {'d','dg','ds','en','fs','fsb','lc','pm'});
+
+            filename = ['data/real/' tag '_tod.mat'];
+
             data = load('-mat', filename, vars{:});
         % }}}
         otherwise
