@@ -7,90 +7,89 @@ function grouptags_collect_rsrn(tags,outfile)
 %can be performed.
 %
 %INPUTS
-%    TAGS      A cell array of the tags to collect the R_s/R_n values for
-%    OUTFILE   A filename specifying where to output the collected data.
-%              Defaults to 'grouptags_rsrn.mat' in the current
-%              directory.
+%  TAGS      A cell array of the tags to collect the R_s/R_n values for
+%  OUTFILE   A filename specifying where to output the collected data.
+%            Defaults to 'grouptags_rsrn.mat' in the current directory.
 %
 %OUTPUTS
-%    All output is saved to the output file.
+%  All output is saved to the output file.
 %
 %EXAMPLES
-%    tags = get_tags('cmb2011',{'has_tod','has_cuts'});
-%    outfile = 'grp_1701.mat';
-%    grouptags_collect_rsrn(tags, outfile);
-%    numbins = 10;
-%    groups = grouptags('cmb2011', {'has_tod','has_cuts'},...
-%                       'rsrn', numbins, outfile);
+%  tags = get_tags('cmb2011',{'has_tod','has_cuts'});
+%  outfile = 'grp_1701.mat';
+%  grouptags_collect_rsrn(tags, outfile);
+%  numbins = 10;
+%  groups = grouptags('cmb2011', {'has_tod','has_cuts'},...
+%                     'rsrn', numbins, outfile);
 %
 
-    if ~exist('outfile','var')
-        outfile = [];
-    end
-    if isempty(outfile)
-        outfile = 'grouptags_rsrn.mat';
-    end
+  if ~exist('outfile','var')
+    outfile = [];
+  end
+  if isempty(outfile)
+    outfile = 'grouptags_rsrn.mat';
+  end
 
-    % Preallocate the memory required to increase performance. Do this by
-    % reading the first tag and copying the size of its structures.
-    data = load_data(tags{1}, 'calval','lc');
-    % First generate a prototype structure
-    prototype = struct();
-    prototype.lc   = data.lc;
-    prototype.rsrn = zeros(size(data.lc.g,1), size(data.lc.g,2));
-    prototype.rgl_rsrn = [];
+  % Preallocate the memory required to increase performance. Do this by
+  % reading the first tag and copying the size of its structures.
+  data = load_data(tags{1}, 'calval','lc');
+  % First generate a prototype structure
+  prototype = struct();
+  prototype.lc   = data.lc;
+  prototype.rsrn = zeros(size(data.lc.g,1), size(data.lc.g,2));
+  prototype.rgl_rsrn = [];
 
-    % Then allocate enough of them to store the info on all tags
-    calvals = repmat(prototype, size(tags,1), size(tags,2));
+  % Then allocate enough of them to store the info on all tags
+  calvals = repmat(prototype, size(tags,1), size(tags,2));
 
-    % Also get the list of files which get_array_info might read.
-    info_files = dir('aux_data/fp_data/fp_data_bicep2_*.csv');
-    info_files = {info_files(:).name};
-    info_dates = cellfun(@(x) str2num(x(end-11:end-4)), info_files);
-    % Append a large number to the end of the array which can never be exceeded
-    info_dates = [info_dates 99999999];
-    % Set to -1 to indicate uninitialized
-    info_curr  = -1;
-    p   = [];
-    ind = [];
+  % Also get the list of files which get_array_info might read.
+  info_files = dir('aux_data/fp_data/fp_data_bicep2_*.csv');
+  info_files = {info_files(:).name};
+  info_dates = cellfun(@(x) str2num(x(end-11:end-4)), info_files);
+  % Append a large number to the end of the array which can never be exceeded
+  info_dates = [info_dates 99999999];
+  % Set to -1 to indicate uninitialized
+  info_curr  = -1;
+  p   = [];
+  ind = [];
 
-    fprintf('Collecting R_s/R_n values for %i tags...\n', length(tags));
-    tic
+  fprintf('Collecting R_s/R_n values for %i tags...\n', length(tags));
+  tic
 
-    % Now for each tag, accumulate the required data.
-    for i=1:length(tags)
+  % Now for each tag, accumulate the required data.
+  for i=1:length(tags)
 
-        fprintf('\t%s\n', tags{i});
+    fprintf('\t%s\n', tags{i});
 
-        % Possibly reload the [p,ind] structures if necessary
-        this_date = str2num(tags{i}(1:8));
-        % The first time, do a kludge to capture which file was read
-        if info_curr == -1
-            info_curr = 1;
-            [str,p,ind] = evalc(['get_array_info(''' tags{i} ''')']);
-            loaded = regexp(str,'fp_data_bicep2_([0-9]{8}).csv','tokens');
-            info_curr = find(str2num(loaded{1}{1}) == info_dates);
-        % otherwise, just read in the new data and wait for the next file to
-        % be needed
-        elseif this_date >= info_dates(info_curr+1)
-            info_curr = info_curr + 1;
-            [p,ind] = get_array_info(tags{i});
-        end
-
-        % Now actually load the data and start calculating the relevant
-        % quantities.
-        data = load_data(tags{i}, 'calval', 'lc');
-        calvals(i).lc = data.lc;
-
-        % Calculate the R_s/R_n number for all channels
-        calvals(i).rsrn = calvals(i).lc.g(:,:,4) ./ calvals(i).lc.g(:,:,3);
-        % Then calculate the R_s/R_n mean for just the RGL channels for each
-        % load curve independently
-        calvals(i).rgl_rsrn = nanmean(calvals(i).rsrn(:,ind.rgl), 2);
+    % Possibly reload the [p,ind] structures if necessary
+    this_date = str2num(tags{i}(1:8));
+    % The first time, do a kludge to capture which file was read
+    if info_curr == -1
+      info_curr = 1;
+      [str,p,ind] = evalc(['get_array_info(''' tags{i} ''')']);
+      loaded = regexp(str,'fp_data_bicep2_([0-9]{8}).csv','tokens');
+      info_curr = find(str2num(loaded{1}{1}) == info_dates);
+    % otherwise, just read in the new data and wait for the next file to be
+    % needed
+    elseif this_date >= info_dates(info_curr+1)
+      info_curr = info_curr + 1;
+      [p,ind] = get_array_info(tags{i});
     end
 
-    fprintf('Writing output to %s...\n', outfile);
-    save(outfile, 'tags', 'calvals');
+    % Now actually load the data and start calculating the relevant
+    % quantities.
+    data = load_data(tags{i}, 'calval', 'lc');
+    calvals(i).lc = data.lc;
 
-    toc
+    % Calculate the R_s/R_n number for all channels
+    calvals(i).rsrn = calvals(i).lc.g(:,:,4) ./ calvals(i).lc.g(:,:,3);
+    % Then calculate the R_s/R_n mean for just the RGL channels for each load
+    % curve independently
+    calvals(i).rgl_rsrn = nanmean(calvals(i).rsrn(:,ind.rgl), 2);
+  end
+
+  fprintf('Writing output to %s...\n', outfile);
+  save(outfile, 'tags', 'calvals');
+
+  toc
 end
