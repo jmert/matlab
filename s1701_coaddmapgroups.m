@@ -147,6 +147,8 @@ function jobs=s1701_coaddmapgroups(bintype,binextra)
         %%% values on the left 2/3, and a histogram of all values on the right
         %%% 1/3.
 
+        minrsrn = min(auxdata.rsrn_groups{blocknum});
+        maxrsrn = max(auxdata.rsrn_groups{blocknum});
         avgrsrn = mean(auxdata.rsrn_groups{blocknum});
 
         % Plot the time series
@@ -186,10 +188,12 @@ function jobs=s1701_coaddmapgroups(bintype,binextra)
         ylabel('Frequency');
         hold on
         xlim([0.5 1]);
-        % Also draw the average R_s/R_n value on the histogram as a vertical
-        % line moving across histogram
+        % Also draw the range of R_s/R_n values on the histogram as two
+        % vertical lines moving across histogram
         ypts = ylim;
-        xpts = [avgrsrn avgrsrn];
+        xpts = [minrsrn minrsrn];
+        line(xpts,ypts,'color','r','linestyle','-.');
+        xpts = [maxrsrn maxrsrn];
         line(xpts,ypts,'color','r','linestyle','-.');
         hold off
 

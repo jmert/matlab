@@ -122,9 +122,18 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
             return
         end
 
-        % Finally, actually run the makepairmaps routine
-        reduc_makepairmaps(gentags, mapopt);
-
+        % Finally, actually run the makepairmaps routine. Do each one
+        % individually even though reduc_makepairmaps can take a cell array
+        % so that on failure, we can output some extra information to the
+        % log file (captured from stderr by farmit).
+        for i=1:length(gentags)
+            try
+                reduc_makepairmaps(gentags(i), mapopt);
+            catch ex
+                fprintf(2,'%s', getReport(ex));
+                fprintf(2,'TagError:%s\n', gentags{i});
+            end
+        end
     end %function s1701_prepare_pairmaps
 
     %%%% }}}
