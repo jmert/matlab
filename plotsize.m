@@ -1,24 +1,24 @@
 function plotsize(handle, width, height, units)
 %PLOTSIZE Set the plot window size.
-%    plotsize(handle, width, height, units)
+%  plotsize(handle, width, height, units)
 %
 %INPUTS
-%    handle  A graphics handle.
-%    width   The width of the plot window.
-%    height  The height of the plot window.
-%    units   The unit system used in width and height. Accepts any unit
-%            system which is compatible with the set() function.
+%  handle  A graphics handle.
+%  width   The width of the plot window.
+%  height  The height of the plot window.
+%  units   The unit system used in width and height. Accepts any unit system
+%          which is compatible with the set() function.
 %
 %NOTES
-%    1) width and height are mandatory arguments.
-%    2) units is optional, and defaults to 'inches' if not set or empty.
+%  1) width and height are mandatory arguments.
+%  2) units is optional, and defaults to 'inches' if not set or empty.
 %
 %EXAMPLE
-%    imagesc(map);
-%    plotsize(gcf, 12, 9, 'centimeters');
+%  imagesc(map);
+%  plotsize(gcf, 12, 9, 'centimeters');
 %
 %SEEALSO
-%    doc figure_props
+%  doc figure_props
 
 	if ~exist('handle', 'var')
 		error('handle must be specified');
