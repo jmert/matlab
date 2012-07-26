@@ -18,17 +18,29 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
 %  AUXDATA     Auxiliary data which is used by the function given in AUXFN.
 %              The data should be the output data from GROUPTAGS.
 
+  %%%% Initialize a bunch of variables {{{
   % Set several "global" variables for use by this an any subfunctions
-  CBARRANGE = [-250 250];
-  sernum    = '1701real';
-  mapopt    = get_default_mapopt( struct('sernum',sernum) );
-
-  disp('Initializing pairmaps...')
-  s1701_prepare_pairmaps(tags);
-
-  % Setup the coadd options structure to ensure a match with the defaults
-  % used by reduc_makepairmaps
-  coaddopt.sernum    = sernum;
+  CBARRANGE   = [-250 250];
+  sernum_real = '1701real';
+  sernum_simQ = '17019902';
+  sernum_simV = '17019912';
+  wmapQ  = 'justus_wmap/wmap_band_iqumap_r9_5yr_Q_v3_bicep2ideal.fits';
+  wmapV  = 'justus_wmap/wmap_band_iqumap_r9_5yr_V_v3_bicep2ideal.fits';
+  mapopt = get_default_mapopt( struct('sernum',sernum_real) );
+  % Initialize the simopt to deal with WMAP data
+  simopt.beamwid    = 'zero';
+  simopt.beamcen    = 'obs';
+  simopt.polpair    = 'ideal';
+  simopt.diffpoint  = 'ideal';
+  simopt.sigmaptype = 'healmap';
+  simopt.siginterp  = 'healpixnearest';
+  simopt.noise      = 'none';
+  simopt.sig        = 'normal';
+  simopt.type       = 'bicep';
+  simopt.ukpervolt  = 1;
+  simopt.interpix   = 0.25;
+  simopt.maketod    = 0;
+  % And generate the corresponding coaddopt to match the defaults in the mapopt
   coaddopt.jacktype  = 0;
   coaddopt.coaddtype = 0;
   coaddopt.filt      = mapopt.filt;
@@ -36,11 +48,78 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
   coaddopt.gs        = mapopt.gs;
   coaddopt.proj      = mapopt.proj;
   coaddopt.daughter  = sprintf('%s_%03i', prefix, blocknum);
-  disp('Co-adding pairmaps...')
+  %%%% End variable initialization }}}
+
+  %%%% Generate the real and simulated pairmaps {{{
+  disp('Initializing real pairmaps...')
+  mapopt = get_default_mapopt( struct('sernum',sernum_real) );
+  real_tags = filter_existing_pairmaps(tags, mapopt);
+  % Make each pairmap individually even though reduc_makepairmaps can take a
+  % cell array so that on failure, we can output some extra information to the
+  % log file (captured from stderr by farmit).
+  for i=1:length(real_tags)
+    try
+      reduc_makepairmaps(real_tags(i), mapopt);
+    catch ex
+      fprintf(2,'%s', getReport(ex));
+      fprintf(2,'TagError:%s\n', real_tags{i});
+    end
+  end
+
+  disp('Initializing WMAP Q pairmaps...')
+  % Reset some necessary fields in the data structures
+  mapopt = get_default_mapopt( struct('sernum',sernum_simQ) );
+  simopt.sigmapfilename = wmapQ;
+  simopt.sernum         = sernum_simQ;
+  simopt.mapopt         = {mapopt};
+  % Get the list of tags to be generated and do so
+  wmapQ_tags = filter_existing_pairmaps(tags, mapopt);
+  for i=1:length(wmapQ_tags)
+    try
+      reduc_makesim(wmapQ_tags(i), simopt);
+    catch ex
+      fprintf(2,'%s', getReport(ex));
+      fprintf(2,'SimError:%s\n', wmapQ_tags{i});
+    end
+  end
+
+  disp('Initializing WMAP V pairmaps...')
+  % Reset some necessary fields in the data structures
+  mapopt = get_default_mapopt( struct('sernum',sernum_simV) );
+  simopt.sigmapfilename = wmapV;
+  simopt.sernum         = sernum_simV;
+  simopt.mapopt         = {mapopt};
+  % Now actually get which tags need to be simulated and do so
+  wmapV_tags = filter_existing_pairmaps(tags, mapopt);
+  for i=1:length(wmapV_tags)
+    try
+      reduc_makesim(wmapV_tags(i), simopt);
+    catch ex
+      fprintf(2,'%s', getReport(ex));
+      fprintf(2,'SimError:%s\n', wmapV_tags{i});
+    end
+  end
+
+  % Release some unneeded memory held in various variables
+  clear real_tags wmapQ_tags wmapV_tags
+  %%%% end pairmaps }}}
+
+  %%%% Coadd all the corresponding maps {{{
+  disp('Co-adding real pairmaps...')
+  coaddopt.sernum = sernum_real;
   reduc_coaddpairmaps(tags, coaddopt);
 
+  disp('Co-adding WMAP Q pairmaps...')
+  coaddopt.sernum = sernum_simQ;
+  reduc_coaddpairmaps(tags, coaddopt);
+
+  disp('Co-adding WMAP V pairmaps...')
+  coaddopt.sernum = sernum_simV;
+  reduc_coaddpairmaps(tags, coaddopt);
+  %%%% end coadd }}}
+
   % Load the data and apply nominal calibrations
-  data = load_data('','map',{'m','map'},coaddopt);
+  data = load_data('', 'map', {'m','map'}, coaddopt);
   map = data.map; m = data.m;
   calfactor = get_ukpervolt();
   map = cal_coadd_maps(map, calfactor);
@@ -96,15 +175,7 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
   delete(h);
 
   %%% AUXILIARY FUNCTIONS {{{
-  function s1701_prepare_pairmaps(tags)
-  %s1701_prepare_pairmaps
-  %
-  %Populate pairmaps/1701/real with pair maps for all tags contained in TAGS
-  %if they do not already exist.
-  %
-  %INPUTS
-  %    TAGS    A cell array containing a list of tags
-
+  function gentags=filter_existing_pairmaps(tags, mapopt)
     % Generate the pairmap file names
     fnames = get_pairmap_filename(tags, mapopt);
     % Then determine which ones need to be generated.
@@ -113,23 +184,7 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
     % Extract the tags which need to be generated. If none do, then just
     % return
     gentags = tags(mask);
-    if length(gentags) < 1
-      return
-    end
-
-    % Finally, actually run the makepairmaps routine. Do each one
-    % individually even though reduc_makepairmaps can take a cell array
-    % so that on failure, we can output some extra information to the
-    % log file (captured from stderr by farmit).
-    for i=1:length(gentags)
-      try
-        reduc_makepairmaps(gentags(i), mapopt);
-      catch ex
-        fprintf(2,'%s', getReport(ex));
-        fprintf(2,'TagError:%s\n', gentags{i});
-      end
-    end
-  end %function s1701_prepare_pairmaps
+  end
   %%%% End aux functions }}}
 
 end %function s1701_coaddmapgroups_worker
