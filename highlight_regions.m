@@ -1,6 +1,7 @@
 function highlight_regions(tag)
 
-  data = load_data(tag, 'tod');
+  fname = get_data_path(tag, 'tod');
+  data = load(fname);
   [p,ind] = get_array_info(tag);
 
   % Chose a good pixel

@@ -32,7 +32,8 @@ function grouptags_collect_rsrn(tags,outfile)
 
   % Preallocate the memory required to increase performance. Do this by
   % reading the first tag and copying the size of its structures.
-  data = load_data(tags{1}, 'calval','lc');
+  fname = get_data_path(tags{1}, 'calval');
+  data = load(fname, 'lc');
   % First generate a prototype structure
   prototype = struct();
   prototype.lc   = data.lc;
@@ -78,7 +79,8 @@ function grouptags_collect_rsrn(tags,outfile)
 
     % Now actually load the data and start calculating the relevant
     % quantities.
-    data = load_data(tags{i}, 'calval', 'lc');
+    fname = get_data_path(tags{i}, 'calval');
+    data = load(fname, 'lc');
     calvals(i).lc = data.lc;
 
     % Calculate the R_s/R_n number for all channels

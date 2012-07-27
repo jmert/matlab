@@ -119,7 +119,8 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
   %%%% end coadd }}}
 
   % Load the data and apply nominal calibrations
-  data = load_data('', 'map', {'m','map'}, coaddopt);
+  fname = get_data_path([], 'map', coaddopt);
+  data = load(fname, 'm','map');
   map = data.map; m = data.m;
   calfactor = get_ukpervolt();
   map = cal_coadd_maps(map, calfactor);
