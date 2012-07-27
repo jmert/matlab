@@ -35,6 +35,7 @@ function fname=get_data_path(tag, product, varargin)
 %
 %    calval    Computed calibration factors
 %    map       Coadded maps
+%    pairmap   Tag pairmap files
 %    tod       Raw time-ordered-data stream
 %
 %
@@ -51,6 +52,12 @@ function fname=get_data_path(tag, product, varargin)
 %         specifies all jackknife types) since a given map type must be chosen.
 %      -- NOTE: The map type does not directly use a tag value anywhere in
 %         choosing the file to load, so here an empty string is permitted.
+%    pairmap
+%      1. mapopt
+%         Structure corresponding to the input to the REDUC_MAKEPAIRMAP
+%         function. The field SERNUM must contain a serial number as usual.
+%         Any unspecified map options are set to their default values using
+%         GET_DEFAULT_MAPOPT.
 %    tod
 %      None
 %
@@ -74,7 +81,7 @@ function fname=get_data_path(tag, product, varargin)
       % since it is always a requirement
       coaddopt = varargin{1};
       if ~isstruct(coaddopt)
-        error('get_data_path [map]: ''map'' expects a coaddopt struct');
+        error('get_data_path [map]: Expected a coaddopt struct');
       end
       if ~isfield(coaddopt,'sernum')
         error(['get_data_path [map]: Serial number (coaddopt.sernum) '...
@@ -98,28 +105,58 @@ function fname=get_data_path(tag, product, varargin)
       else
         filt = coaddopt.filt;
       end
+      gs = ''; proj = ''; coaddtype = '';
       if coaddopt.gs == 1
         gs = '_gs';
-      else
-        gs = '';
       end
       if ~strcmp(coaddopt.proj,'radec')
         proj = ['_' coaddopt.proj];
-      else
-        proj = '';
       end
       if coaddopt.coaddtype > 0
         coaddtype=sprintf('%1d',coaddopt.coaddtype);
-      else
-        coaddtype='';
       end
 
       fileext = sprintf('filt%s_weight%1d%s%s',...
             filt,coaddopt.weight,gs,proj);
       fname = sprintf('maps/%s/%s_%s_%s_jack%d%s.mat',...
-            coaddopt.sernum(1:4),coaddopt.sernum(5:end),...
-            coaddopt.daughter,fileext,...
-            coaddopt.jacktype,coaddtype);
+          coaddopt.sernum(1:4),coaddopt.sernum(5:end),...
+          coaddopt.daughter,fileext,...
+          coaddopt.jacktype,coaddtype);
+    % }}}
+    case 'pairmap' % {{{
+      check_nargin(numargin, 1, 'pairmap');
+      % We require at least a serial number to exist within the mapopt struct
+      % since it is always a requirement
+      mapopt = varargin{1};
+      if ~isstruct(mapopt)
+        error('get_data_path [pairmap]: Expected a mapopt struct');
+      end
+      if ~isfield(mapopt,'sernum')
+        error(['get_data_path [pairmap]: Serial number (mapopt.sernum) '...
+             'must be given.']);
+      end
+      % Then use the get_default_coaddopt function to combine the given
+      % structure with the required structure members.
+      mapopt = get_default_mapopt(mapopt);
+
+      % Build the required string components
+      if(iscell(mapopt.filt))
+        filt=[mapopt.filt{:}];
+      else
+        filt=mapopt.filt;
+      end
+      gs = ''; proj = '';
+      if(mapopt.gs==1)
+        gs='_gs';
+      end
+      if(~strcmp(mapopt.proj,'radec'))
+        proj=['_',mapopt.proj];
+      end
+
+      % make the filename
+      fname = sprintf('pairmaps/%s/%s/%s_filt%s_weight%1d%s%s.mat',...
+          mapopt.sernum(1:4), mapopt.sernum(5:end),...
+          tag, filt, mapopt.weight, gs, proj);
     % }}}
     case 'tod' % {{{
       check_nargin(numargin, 0, 'tod');
