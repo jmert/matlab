@@ -248,38 +248,3 @@ function [groups,uid,data]=grouptags(set,flags,divtype,extra)
 
 end
 
-function groups=bintags(intags, binsize)
-%groups=bintags(intags, binsize)
-%
-%Divides a list of tags into a number of groups of a given bin size.
-%
-%The ability to simply bin a list of tags together into a set of groups is
-%generically useful (i.e. for farming operations across a cluster), so the
-%function is exposed for use by other grouping algorithms as a helper function.
-%
-%INPUTS
-%  INTAGS       List of input tags to operate upon
-%  BINSIZE      Size of each bin to generate
-%
-%OUTPUT
-%  BINNEDGRPS   The output cell array of groups of tags
-%
-%EXAMPLE
-%  farmsets = bintags(alltags, 20);
-
-  if ~isnumeric(binsize) || binsize < 0
-    error('bintags: Invalid binning size');
-  end
-
-  groups = {};
-  % Make groups which are each binsize in length
-  while length(intags) > binsize
-    groups{end+1} = intags(1:binsize);
-    intags = intags((binsize+1):end);
-  end
-  % Take up any extra stragglers
-  if length(intags) > 0
-    groups{end+1} = intags(1:end);
-  end
-end
-
