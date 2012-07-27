@@ -76,7 +76,6 @@ function jobs=s1701_coaddmapgroups(bintype,binextra)
                'jobname',jobname,...
                'group',GROUP,...
                'args',ARGS);
-
     end
 
     %%%% Metadata output {{{

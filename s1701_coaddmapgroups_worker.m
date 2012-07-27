@@ -106,59 +106,119 @@ function s1701_coaddmapgroups_worker(tags, blocknum, prefix, auxfn, auxdata)
 
   %%%% Coadd all the corresponding maps {{{
   disp('Co-adding real pairmaps...')
-  coaddopt.sernum = sernum_real;
-  reduc_coaddpairmaps(tags, coaddopt);
+  coaddR = coaddopt;
+  coaddR.sernum = sernum_real;
+  reduc_coaddpairmaps(tags, coaddR);
 
   disp('Co-adding WMAP Q pairmaps...')
-  coaddopt.sernum = sernum_simQ;
-  reduc_coaddpairmaps(tags, coaddopt);
+  coaddQ = coaddopt;
+  coaddQ.sernum = sernum_simQ;
+  reduc_coaddpairmaps(tags, coaddQ);
 
   disp('Co-adding WMAP V pairmaps...')
-  coaddopt.sernum = sernum_simV;
-  reduc_coaddpairmaps(tags, coaddopt);
+  coaddV = coaddopt;
+  coaddV.sernum = sernum_simV;
+  reduc_coaddpairmaps(tags, coaddV);
   %%%% end coadd }}}
 
-  % Load the data and apply nominal calibrations
-  fname = get_data_path([], 'map', coaddopt);
-  data = load(fname, 'm','map');
-  map = data.map; m = data.m;
-  calfactor = get_ukpervolt();
-  map = cal_coadd_maps(map, calfactor);
+  %%%% Do the absolute calibration {{{
+  qmap = get_data_path([],'map',coaddR);
+  rmap = get_data_path([],'map',coaddQ);
+  cmap = get_data_path([],'map',coaddV);
+  % reduc_abscal currently add the 'maps/' prefix to the file names given
+  % which get_data_path also does, so fix the paths by cutting the first
+  % 5 characters away;
+  qmap = qmap(6:end);
+  rmap = rmap(6:end);
+  cmap = cmap(6:end);
+  % Then actually run the calibration
+  [ukpervolt,aps] = reduc_abscal(qmap, rmap, cmap, 'wmapqv', 0);
+  % }}}
 
   %%%% Now actually start plotting the the maps {{{
   h = figure('Visible','off');
   colormap jet
-  plotsize(h, 1500, 300, 'pixels');
+  plotsize(h, 1500, 1000, 'pixels');
 
   % Set a bunch of defaults
   set(h, 'DefaultAxesLooseInset',[0 0 0 0]);
   set(h, 'DefaultAxesCLim', CBARRANGE);
   set(h, 'DefaultAxesFontSize', 10);
-  setappdata(gcf, 'SubplotDefaultAxesLocation', [0.03, 0.05, 0.92, 0.85]);
+  setappdata(gcf, 'SubplotDefaultAxesLocation', [0.01, 0.08, 0.98, 0.85]);
 
+  % Load the real and apply the nominal calibration factor.
+  % Since we already chopped off the 'maps/' part, re-add it here
+  data = load(['maps/' qmap], 'm','map');
+  map = data.map; m = data.m;
+  calfactor = get_ukpervolt();
+  map = cal_coadd_maps(map, calfactor);
   % Plot T
-  Tax = subplot(1,3, 1);
+  Tax = subplot(3,3, 1);
   imagesc(m.x_tic, m.y_tic, map.T, CBARRANGE);
   Taxbar = colorbar('eastoutside');
-  title('150 Ghz T (\muK)');
+  title(sprintf('150 Ghz T (\\muK) [%d \\muK/V]', calfactor));
   xlabel('RA');
   ylabel('Dec');
-
   % Plot Q
-  Qax = subplot(1,3, 2);
+  Qax = subplot(3,3, 2);
   imagesc(m.x_tic, m.y_tic, map.Q, CBARRANGE);
   Qaxbar = colorbar('eastoutside');
-  title('150 Ghz Q (\muK)');
+  title('Real 150 Ghz Q (\muK)');
+  xlabel('RA');
+  ylabel('Dec');
+  % Plot U
+  Uax = subplot(3,3, 3);
+  imagesc(m.x_tic, m.y_tic, map.U, CBARRANGE);
+  Uaxbar = colorbar('eastoutside');
+  title('Real 150 Ghz U (\muK)');
   xlabel('RA');
   ylabel('Dec');
 
-  % Plot U
-  Uax = subplot(1,3, 3);
-  imagesc(m.x_tic, m.y_tic, map.U, CBARRANGE);
-  Uaxbar = colorbar('eastoutside');
-  title('150 Ghz U (\muK)');
+  % Now replot the T map using the newly determined calibration factor instead
+  map = data.map;
+  map = cal_coadd_maps(map, ukpervolt);
+  realax = subplot(3,3, 4);
+  imagesc(m.x_tic, m.y_tic, map.T, CBARRANGE);
+  realaxbar = colorbar('eastoutside');
+  title(sprintf('150 Ghz T (\\muK) [%4.0f \\muK/V]', ukpervolt));
   xlabel('RA');
   ylabel('Dec');
+  % Then also plot the reference and calibration maps
+  % Reference map
+  data = load(['maps/' rmap], 'm','map');
+  map = data.map; m = data.m;
+  refax = subplot(3,3, 5);
+  imagesc(m.x_tic, m.y_tic, map.T, CBARRANGE);
+  refaxbar = colorbar('eastoutside');
+  title('WMAP Q Band Reference');
+  xlabel('RA');
+  ylabel('Dec');
+  % Calibration map
+  data = load(['maps/' cmap], 'm','map');
+  map = data.map; m = data.m;
+  calax = subplot(3,3, 6);
+  imagesc(m.x_tic, m.y_tic, map.T, CBARRANGE);
+  calaxbar = colorbar('eastoutside');
+  title('WMAP V Band Calibration');
+  xlabel('RA');
+  ylabel('Dec');
+
+  % Plot the extra information from cross spectrum analysis
+  subplot(3,3, 7);
+  plot(aps(1,1).l,[aps(1,:).rxc],'.-')
+  title('150GHz ref x cal');
+  xlabel('ell');
+  ylabel('xspec');
+
+  subplot(3,3, 8);
+  plot(aps(1,1).l,[aps(1,:).rxq],'.-')
+  title('150GHz ref x data');
+  xlabel('ell');
+  ylabel('xspec');
+
+  subplot(3,3, 9);
+  plot(aps(1,1).l,[aps(1,:).cal],'.-');
+  title('150GHz cal factors');
 
   % Also call the auxiliary plotting function
   auxfn(tags,blocknum,prefix,auxdata);
