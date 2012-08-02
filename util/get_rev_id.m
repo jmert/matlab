@@ -15,10 +15,18 @@ function revid=get_rev_id()
 %  Git
 %  Mercurial
 %
+%REQUIREMENTS
+%
+%  - Unix utility 'which' is used to identify whether a particular SCM program
+%    is installed on the current host.
+%
 %NOTES
 %
 %  CVS is *NOT* supported since even accessing the log may require an
-%  authentication to the repository server.
+%  authentication to the repository server. Also, the repository does
+%  not carry a global revision ID but instead for only a single file, so
+%  getting a consistent code state is difficult with only the file revision
+%  ID.
 %
 
   % Get the path of the parent function. The current function is index 1 in the
