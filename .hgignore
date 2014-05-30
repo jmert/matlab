@@ -1,7 +1,24 @@
 syntax: glob
 
-.*.swp
+## Standard ignores:
+# Backup files
 *~
+# Matlab save files
+*.mat
+# Python compiled objects
+*.pyc
+# Vim swap files
+.*.swp
+.*.swo
+
+## Project ignores:
+
+# General
 external/
 test/
+
+# 1702_keck2014_abscal
+1702_keck2014_abscal/planck_smooth/*.fits
+1702_keck2014_abscal/planck_smooth/tmp/
+
 
