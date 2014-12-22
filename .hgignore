@@ -3,13 +3,16 @@ syntax: glob
 ## Standard ignores:
 # Backup files
 *~
-# Matlab save files
+# Matlab
 *.mat
+*.mex*
 # Python compiled objects
 *.pyc
 # Vim swap files
 .*.swp
 .*.swo
+# Compiled libraries
+*.so
 
 ## Project ignores:
 
