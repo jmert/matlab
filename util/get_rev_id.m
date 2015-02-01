@@ -1,11 +1,26 @@
-function revid=get_rev_id()
-%revid=get_rev_id
+function revid=get_rev_id(func)
+%revid=get_rev_id(func)
 %
 %If the calling function is stored in a SCM, then return a string which
 %identifies the current snapshot of the SCM (if possible).
 %
 %INPUTS
-%  None
+%  func    Optional, defaults to []. Specifies how to search for repository
+%          information:
+%
+%            1. If empty, the call stack is traversed to get the caller's
+%               information. The folder which contains the source for the
+%               calling function is searched for repository information. If
+%               called from the REPL, then the current working directory is
+%               used instead.
+%
+%            2. If func is a function handle, the source path for the function
+%               is searched. Using a function handle to an anonymous function
+%               is an error.
+%
+%            3. If func is a string, then it must be a valid path, and that
+%               path will be searched for repository information. It is an
+%               error if the path does not exist.
 %
 %OUTPUT
 %  revid   The identifying string if in an SCM, empty otherwise.
@@ -29,16 +44,36 @@ function revid=get_rev_id()
 %  ID.
 %
 
-  % Get the path of the parent function. The current function is index 1 in the
-  % stack trace, so 2 is the parent. If the length is less than 2, then just
-  % return an empty string since we must have been called directly by the user
-  % interactively.
-  st = dbstack('-completenames');
-  if length(st) < 2
-    return
+  % 
+  if ~exist('func','var') || isempty(func)
+    st = dbstack('-completenames');
+    % Get the path of the parent function. The current function is index 1 in
+    % the stack trace, so 2 is the parent. If the length is less than 2, then
+    % use the current working directory since we must have been called by the
+    % user interactively.
+    if length(st) < 2
+      parentpath = pwd();
+    else
+      [parentpath,parentname,parentext] = fileparts(st(2).file);
+    end
+
+  elseif isa(func, 'function_handle')
+    finfo = functions(func);
+    % Anonymous functions have no path, so throw an error
+    if isempty(finfo.file)
+      error('get_rev_id:AnonymousFunction', ...
+          'func cannot be an anonymous function');
+    end
+    [parentpath,parentname,parentext] = fileparts(finfo.file);
+
+  elseif ischar(func)
+    if ~exist(func, 'dir')
+      error('get_rev_id:NonexistentPath', ...
+        'Path not found.')
+    end
+    parentpath = func;
   end
-  [parentpath,parentname,parentext] = fileparts(st(2).file);
-  fname = [parentname,parentext];
+
   % Change directories to the path of the file, saving the output to be
   % restored later since cd has global rather than function scope
   oldcwd = cd(parentpath);
@@ -81,7 +116,7 @@ function revid=get_rev_id()
   elseif havehg  && hgrepo
     prefix = 'hg: ';
     % For some odd reason, 
-    [r,str] = unix('hg id -inb');
+    [r,str] = unix('hg id -ib');
   end
   % Make revid identify both the SCM and a revision ID. The (1:end-1) removes
   % the extra carriage return captured by the unix command calls.
