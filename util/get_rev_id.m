@@ -77,7 +77,7 @@ function revid=get_rev_id(func)
   % Change directories to the path of the file, saving the output to be
   % restored later since cd has global rather than function scope
   oldcwd = cd(parentpath);
-  
+
   % First identify whether the particular SCM type can be queried at all since
   % the application may not be available in some environments.
   [bingit,gitpath] = unix('which git 2>/dev/null');
@@ -112,10 +112,9 @@ function revid=get_rev_id(func)
   % in formatting since no tool provides exactly the same output.
   if     havegit && gitrepo
     prefix = 'git: ';
-    [r,str] = unix('git describe --all --long');
+    [r,str] = unix('echo "$(git describe --abbrev=12 --always --dirty) $(git branch | egrep ''^*'' | cut -d'' '' -f2)"');
   elseif havehg  && hgrepo
     prefix = 'hg: ';
-    % For some odd reason, 
     [r,str] = unix('hg id -ib');
   end
   % Make revid identify both the SCM and a revision ID. The (1:end-1) removes
