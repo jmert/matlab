@@ -36,7 +36,12 @@ function saveandmark(filename,varargin)
   end
 
   % Also generate a temporary file name
-  tmpfilename = fullfile(fpath, [fname '.' gen_stamp() 'tmp' fext]);
+  [ret,tmpfilename] = unix(['stty -echo; mktemp -u ' fname '.XXXXXX_tmp' fext]);
+  if ret ~= 0
+    error('saveandmark:tempFile', 'Could not create temporary file.');
+  end
+  [tmpfpath,tmpfname,tmpfext] = fileparts(tmpfilename(1:end-1));
+  tmpfilename = fullfile(fpath, [tmpfname tmpfext]);
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % Uptake variables
@@ -125,11 +130,13 @@ function saveandmark(filename,varargin)
 
   % Clean up after ourselves if all the attempts failed and throw an error
   if ~saveOK
-    system_safe(sprintf('rm -f ''%s''', tmpfilename));
+    oldstate = recycle('off');
+    delete(tmpfilename);
+    recycle(oldstate);
     error('saveandmark:saveFailed', ...
       ['Failed to save ''' filename '''.']);
   end
 
   % If we got here, everything went OK, so move from temporary
-  system_safe(sprintf('mv ''%s'' ''%s''', tmpfilename, filename));
+  movefile(tmpfilename, filename);
 end
