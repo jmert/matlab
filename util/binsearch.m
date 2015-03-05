@@ -29,11 +29,8 @@ function idx=binsearch(haystack,needle,exact)
   lbound = 1;
   ubound = length(haystack)+1;
 
-  fprintf('init: lb = %i, ub = %i\n', lbound, ubound);
-
   while lbound<=length(haystack) && ubound>lbound
     mid = fix((ubound+lbound)/2);
-    fprintf('iter: lb = %i, mid = %i, ub = %i\n', lbound, mid, ubound);
     if needle == haystack(mid)
       idx = mid;
       return
@@ -51,6 +48,4 @@ function idx=binsearch(haystack,needle,exact)
   else
     idx = lbound;
   end
-
-  fprintf('final: lb = %i, ub = %i\n', lbound, ubound);
 end
