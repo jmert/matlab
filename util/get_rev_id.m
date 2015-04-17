@@ -1,47 +1,47 @@
 function revid=get_rev_id(func)
-%revid=get_rev_id(func)
+% revid=get_rev_id(func)
 %
-%If the calling function is stored in a SCM, then return a string which
-%identifies the current snapshot of the SCM (if possible).
+% If the calling function is stored in a SCM, then return a string which
+% identifies the current snapshot of the SCM (if possible).
 %
-%INPUTS
-%  func    Optional, defaults to []. Specifies how to search for repository
-%          information:
+% INPUTS
+%   func    Optional, defaults to []. Specifies how to search for repository
+%           information:
 %
-%            1. If empty, the call stack is traversed to get the caller's
-%               information. The folder which contains the source for the
-%               calling function is searched for repository information. If
-%               called from the REPL, then the current working directory is
-%               used instead.
+%             1. If empty, the call stack is traversed to get the caller's
+%                information. The folder which contains the source for the
+%                calling function is searched for repository information. If
+%                called from the REPL, then the current working directory is
+%                used instead.
 %
-%            2. If func is a function handle, the source path for the function
-%               is searched. Using a function handle to an anonymous function
-%               is an error.
+%             2. If func is a function handle, the source path for the function
+%                is searched. Using a function handle to an anonymous function
+%                is an error.
 %
-%            3. If func is a string, then it must be a valid path, and that
-%               path will be searched for repository information. It is an
-%               error if the path does not exist.
+%             3. If func is a string, then it must be a valid path, and that
+%                path will be searched for repository information. It is an
+%                error if the path does not exist.
 %
-%OUTPUT
-%  revid   The identifying string if in an SCM, empty otherwise.
+% OUTPUT
+%   revid   The identifying string if in an SCM, empty otherwise.
 %
-%SUPPORTED TYPES
+% SUPPORTED TYPES
 %
-%  Git
-%  Mercurial
+%   Git
+%   Mercurial
 %
-%REQUIREMENTS
+% REQUIREMENTS
 %
-%  - Unix utility 'which' is used to identify whether a particular SCM program
-%    is installed on the current host.
+%   - Unix utility 'which' is used to identify whether a particular SCM program
+%     is installed on the current host.
 %
-%NOTES
+% NOTES
 %
-%  CVS is *NOT* supported since even accessing the log may require an
-%  authentication to the repository server. Also, the repository does
-%  not carry a global revision ID but instead for only a single file, so
-%  getting a consistent code state is difficult with only the file revision
-%  ID.
+%   CVS is *NOT* supported since even accessing the log may require an
+%   authentication to the repository server. Also, the repository does
+%   not carry a global revision ID but instead for only a single file, so
+%   getting a consistent code state is difficult with only the file revision
+%   ID.
 %
 
   % 

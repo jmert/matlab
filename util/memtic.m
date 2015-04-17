@@ -1,7 +1,7 @@
 function memtic()
-% function memtic()
+% memtic()
 %
-% Reset malloc counters. See also memtoc().
+% Resets malloc counters. See also memtoc().
 %
 
   trace_malloc_reset()

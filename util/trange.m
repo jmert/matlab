@@ -1,5 +1,5 @@
 function [is,ie]=trange(d,tstart,tend,fast,format)
-% function trange(d,tstart,tend)
+% [is,ie]=trange(d,tstart,tend)
 % 
 % Searches d.t or d.ts for the indices corresponding closest to the given
 % beginning and end times.

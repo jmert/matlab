@@ -1,21 +1,21 @@
 function idx=binsearch(haystack,needle,exact)
-%function idx=binsearch(haystack,needle,exact)
+% idx=binsearch(haystack,needle,exact)
 %
-%Use a binary search to find needle in haystack.
+% Use a binary search to find needle in haystack.
 %
-%INPUTS
-%  haystack    The array to search. Assumed that haystack is sorted.
+% INPUTS
+%   haystack    The array to search. Assumed that haystack is sorted.
 %
-%  needle      The element to search for.
+%   needle      The element to search for.
 %
-%  exact       Defaults to true. If needle is not found and exact is true, then
-%              the empty set is returned to indicate it doesn't exist. If false
-%              the position where needle could be inserted (shifting the
-%              latter portion of the array one index higher) and maintain
-%              haystack's sorted order.
+%   exact       Defaults to true. If needle is not found and exact is true, then
+%               the empty set is returned to indicate it doesn't exist. If false
+%               the position where needle could be inserted (shifting the
+%               latter portion of the array one index higher) and maintain
+%               haystack's sorted order.
 %
-%OUTPUTS
-%  idx         Position of the element.
+% OUTPUTS
+%   idx         Position of the element.
 %
 
   if ~isa(needle,class(haystack))

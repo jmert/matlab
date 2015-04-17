@@ -1,7 +1,7 @@
 function memtoc()
-% function memtic()
+% memtoc()
 %
-% Reset malloc counters. See also memtoc().
+% Prints malloc counter statistics to screen. See also memtic().
 %
 
   [malloc,calloc,realloc] = trace_malloc_counts();
