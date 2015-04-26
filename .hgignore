@@ -24,4 +24,5 @@ test/
 1702_keck2014_abscal/planck_smooth/*.fits
 1702_keck2014_abscal/planck_smooth/tmp/
 
-
+# 1707_skip_tfpustd
+1707_test_skip_tfpustd/private/
