@@ -27,5 +27,8 @@ test/
 # 1707_skip_tfpustd
 1707_test_skip_tfpustd/private/
 
+# S0006_K15_fpdata
+S0006_K15_fpdata/*.csv
+
 # S0007_legendre_stress_test
 S0007_legendre_stress_test/stresstest
