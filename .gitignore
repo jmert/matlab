@@ -1,5 +1,3 @@
-syntax: glob
-
 ## Standard ignores:
 # Backup files
 *~
