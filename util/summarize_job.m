@@ -1,5 +1,5 @@
-function stats=summarize_job(jobregex,datebegin,dateend)
-% stats=summarize_job(jobregex,datebegin,dateend)
+function stats=summarize_job(jobregex,datebegin,dateend,doplot)
+% stats=summarize_job(jobregex,datebegin,dateend,doplot)
 %
 % Analyzes statistics recorded by collect_job_stats() for jobs matching
 % jobregex within the given date range.
@@ -13,6 +13,9 @@ function stats=summarize_job(jobregex,datebegin,dateend)
 %   dateend      Ending search date as datenum or string parsable by
 %                datenum().
 %
+%   doplot       Show plots, true or false. Defaults to true for headed mode,
+%                false for headless.
+%
 % OUTPUTS
 %   stats        Struct containing job counts, max/avg for job resources,
 %                and histograms for job resources.
@@ -24,6 +27,15 @@ function stats=summarize_job(jobregex,datebegin,dateend)
   if ~exist('dateend', 'var') || isempty(dateend)
     dateend = now();
   end
+  if ~exist('doplot','var') || isempty(doplot)
+    scr = get(0,'ScreenSize');
+    if all(scr(3:4) == [1 1])
+      doplot = false;
+    else
+      doplot = true;
+    end
+  end
+
   if ischar(datebegin)
     datebegin = datenum(datebegin);
   end
@@ -32,7 +44,7 @@ function stats=summarize_job(jobregex,datebegin,dateend)
   end
 
   datebegin = floor(datebegin);
-  dateend = ceil(dateend)-1;
+  dateend = ceil(dateend+1/3600)-1;
 
   stats = struct();
   info = {};
@@ -80,9 +92,18 @@ function stats=summarize_job(jobregex,datebegin,dateend)
 
     % Find an even number of base-10 gigabytes to histogram across.
     gb = ceil(stats.memuse.max/1000)*1000;
-    [bc,cnt] = hfill(horzcat(info{maskcd,nn}), 100, 0, gb);
-    stats.memuse.hist.bc = bc;
-    stats.memuse.hist.n  = cnt;
+    e = linspace(0, gb, 101);
+    n = histc(horzcat(info{maskcd,nn}), e);
+    stats.memuse.hist.e = e;
+    stats.memuse.hist.n = n;
+
+    if doplot
+      figure()
+      stairs(e, n);
+      title(sprintf('Max memory use - %d jobs', stats.numcomplete))
+      xlabel('Memory use [MiB]');
+      ylabel('Counts');
+    end
   end
 
   nn = strmatch('Elapsed', fields(:,1));
@@ -92,9 +113,18 @@ function stats=summarize_job(jobregex,datebegin,dateend)
 
     % Find nearest quarter hour to histogram across.
     qhr = ceil(stats.timeuse.max/15)*15;
-    [bc,cnt] = hfill(horzcat(info{maskcd,nn}), 100, 0, qhr);
-    stats.timeuse.hist.bc = bc;
-    stats.timeuse.hist.n  = cnt;
+    e = linspace(0, qhr, 101);
+    n = histc(horzcat(info{maskcd,nn}), e);
+    stats.timeuse.hist.e = e;
+    stats.timeuse.hist.n = n;
+
+    if doplot
+      figure()
+      stairs(e, n);
+      title(sprintf('Run times - %d jobs', stats.numcomplete))
+      xlabel('Time elapsed [min]');
+      ylabel('Counts');
+    end
   end
 end
 
