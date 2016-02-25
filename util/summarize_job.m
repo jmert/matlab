@@ -9,7 +9,7 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
 %
 %   datebegin    Beginning search date as datenum or string parsable by
 %                datenum().
-
+%
 %   dateend      Ending search date as datenum or string parsable by
 %                datenum().
 %
@@ -62,7 +62,7 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
 
     if isempty(fields)
       fields = xx.fields;
-      jn = strmatch('JobName',fields(:,1));
+      jn = strmatch('JobName',fields, 'exact');
     end
     % Filter away all entries which don't match the given regular expression
     matches = ~cellfun(@isempty, regexp(xx.info(:,jn), jobregex));
@@ -73,7 +73,7 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
     return
   end
 
-  sn = strmatch('State', fields(:,1));
+  sn = strmatch('State', fields, 'exact');
   % Mask for successfully completed jobs
   maskcd = rvec(strcmp('COMPLETED', info(:,sn)));
   % Mask for failed jobs
@@ -85,7 +85,7 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
   stats.numfail = sum(maskf);
   stats.numtimeout = sum(maskto);
 
-  nn = strmatch('MaxVMSize', fields(:,1));
+  nn = strmatch('MaxVMSize', fields, 'exact');
   if ~isempty(nn)
     stats.memuse.avg = mean(horzcat(info{maskcd,nn}));
     stats.memuse.max = max(horzcat(info{maskcd,nn}));
@@ -106,7 +106,7 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
     end
   end
 
-  nn = strmatch('Elapsed', fields(:,1));
+  nn = strmatch('Elapsed', fields, 'exact');
   if ~isempty(nn)
     stats.timeuse.avg = mean(horzcat(info{maskcd,nn}));
     stats.timeuse.max = max(horzcat(info{maskcd,nn}));
