@@ -6,6 +6,18 @@ function collect_job_stats()
 % summarize_job().
 %
 
+  % Make sure we don't stall at a debug prompt if an error occurs:
+  dbclear all
+  try
+    do_collection()
+  catch ex
+    fprintf(2, getReport(ex,'extended','hyperlinks','off'));
+    exit(1)
+  end
+
+end
+
+function do_collection()
   % In the first column, put a list of each field which should have a data
   % handler applied. The second column then is a function handle to a
   % function which will parse the input string.
@@ -101,44 +113,50 @@ function collect_job_stats()
   id = strmatch('JobID', fields, 'exact');
   jn = strmatch('JobName', fields, 'exact');
 
-  info2 = cell(size(info));
-  info2(1,:) = info(1,:);
-  cnt = 1;
-  mergefields = setdiff(1:nfields, [id,jn]);
-  for ii=2:njobs
-    % Just collect the line if we don't need to merge.
-    if info{ii,id} ~= info{ii-1,id} || ~strcmp(info{ii,jn},'batch')
-      cnt = cnt + 1;
-      info2(cnt,:) = info(ii,:);
-      continue;
-    end
-
-    % Otherwise merge fields (in a type-specific way)
-    for jj=mergefields
-      switch class(info2{cnt,jj})
-        case 'single'; condfn = @isnan;
-        case 'double'; condfn = @isnan;
-        case 'char'  ; condfn = @isempty;
+  % Pre-allocate so that if info is empty, these two still exist for logic
+  % later.
+  yesterinfo = cell(0,nfields);
+  todayinfo = cell(0,nfields);
+  if size(info,1) > 0
+    info2 = cell(size(info));
+    info2(1,:) = info(1,:);
+    cnt = 1;
+    mergefields = setdiff(1:nfields, [id,jn]);
+    for ii=2:njobs
+      % Just collect the line if we don't need to merge.
+      if info{ii,id} ~= info{ii-1,id} || ~strcmp(info{ii,jn},'batch')
+        cnt = cnt + 1;
+        info2(cnt,:) = info(ii,:);
+        continue;
       end
-      if condfn(info2{cnt,jj}) && ~condfn(info{ii,jj})
-        info2{cnt,jj} = info{ii,jj};
+
+      % Otherwise merge fields (in a type-specific way)
+      for jj=mergefields
+        switch class(info2{cnt,jj})
+          case 'single'; condfn = @isnan;
+          case 'double'; condfn = @isnan;
+          case 'char'  ; condfn = @isempty;
+        end
+        if condfn(info2{cnt,jj}) && ~condfn(info{ii,jj})
+          info2{cnt,jj} = info{ii,jj};
+        end
       end
     end
-  end
-  info = info2(1:cnt,:);
-  clear info2;
+    info = info2(1:cnt,:);
+    clear info2;
 
-  % Split the new list by date:
-  sn = strmatch('Start', fields, 'exact');
-  todaystamp = floor(now());
-  yesteridx = find(horzcat(info{:,sn}) < todaystamp);
-  todayidx  = find(horzcat(info{:,sn}) > todaystamp);
-  yesterinfo = info(yesteridx,:);
-  todayinfo  = info(todayidx,:);
+    % Split the new list by date:
+    sn = strmatch('Start', fields, 'exact');
+    todaystamp = floor(now());
+    yesteridx = find(horzcat(info{:,sn}) < todaystamp);
+    todayidx  = find(horzcat(info{:,sn}) > todaystamp);
+    yesterinfo = info(yesteridx,:);
+    todayinfo  = info(todayidx,:);
 
-  if ~exist('farmfiles/stats','dir')
-    system('mkdir -p farmfiles/stats');
-  end
+    if ~exist('farmfiles/stats','dir')
+      system('mkdir -p farmfiles/stats');
+    end
+  end % size(info,1) > 0
 
   % Load yesterday's statistics file and merge entries which are common:
   yesterfile = sprintf('farmfiles/stats/%s.mat', datestr(now()-1, 'yyyymmdd'));
