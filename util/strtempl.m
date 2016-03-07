@@ -117,10 +117,15 @@ function str=strtempl(template)
     % Now incrementally build the sprintf string.
     sprintfstr = [sprintfstr vars{ii,3}];
     if ii ~= numel(sidx)
-      sprintfstr = [sprintfstr template(ee+1:sidx(ii+1)-1)];
+      nextpart = template(ee+1:sidx(ii+1)-1);
     else
-      sprintfstr = [sprintfstr template(ee+1:end)];
+      nextpart = template(ee+1:end);
     end
+    % To permit passing the output of this function to another printf-style
+    % function, escape any '%%'.
+    nextpart = strrep(nextpart, '%%', '%%%%');
+    % Then append the string
+    sprintfstr = [sprintfstr nextpart];
   end
 
   % With all the pieces assembled, simply produce the string.
