@@ -1,5 +1,5 @@
-function stats=summarize_job(jobregex,datebegin,dateend,doplot)
-% stats=summarize_job(jobregex,datebegin,dateend,doplot)
+function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
+% [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
 %
 % Analyzes statistics recorded by collect_job_stats() for jobs matching
 % jobregex within the given date range.
@@ -19,6 +19,10 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
 % OUTPUTS
 %   stats        Struct containing job counts, max/avg for job resources,
 %                and histograms for job resources.
+%
+%   fields       List of field headings for `info`.
+%
+%   info         Raw job information for the given job regex pattern.
 %
 
   if ~exist('datebegin','var') || isempty(datebegin)
@@ -89,6 +93,8 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
   if ~isempty(nn)
     stats.memuse.avg = mean(horzcat(info{maskcd,nn}));
     stats.memuse.max = max(horzcat(info{maskcd,nn}));
+    stats.memuse.used = sum(horzcat(info{maskcd,nn}));
+    stats.memuse.wasted = sum(horzcat(info{maskf|maskto,nn}));
 
     % Find an even number of base-10 gigabytes to histogram across.
     gb = ceil(stats.memuse.max/1000)*1000;
@@ -106,10 +112,12 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
     end
   end
 
-  nn = strmatch('Elapsed', fields, 'exact');
+  nn = strmatch('CPUTime', fields, 'exact');
   if ~isempty(nn)
     stats.timeuse.avg = mean(horzcat(info{maskcd,nn}));
     stats.timeuse.max = max(horzcat(info{maskcd,nn}));
+    stats.timeuse.used = sum(horzcat(info{maskcd,nn}));
+    stats.timeuse.wasted = sum(horzcat(info{maskf|maskto,nn}));
 
     % Find nearest quarter hour to histogram across.
     qhr = ceil(stats.timeuse.max/15)*15;
@@ -126,5 +134,42 @@ function stats=summarize_job(jobregex,datebegin,dateend,doplot)
       ylabel('Counts');
     end
   end
+
+  st = strmatch('Start', fields, 'exact');
+  en = strmatch('End', fields, 'exact');
+  if ~isempty(st) && ~isempty(en)
+    % Determine the start and end times, rounded outward to an even 6 hours.
+    stime = floor(min(horzcat(info{:,st}))*24/6)*6;
+    etime = ceil(max(horzcat(info{:,en}))*24/6)*6;
+    e = (stime:etime)/24;
+    % Then build a histogram with 1-hour resolution:
+    n = zeros(1, etime-stime+1);
+    for ii=find(maskcd)
+      % Round the individual job start and end time to the nearest hour.
+      jobst = floor(info{ii,st}*24);
+      joben = ceil(info{ii,en}*24);
+      % Increment within that time span.
+      n([jobst:joben]-stime+1) = n([jobst:joben]-stime+1) + 1;
+    end
+
+    stats.jobrate.max = max(n);
+    stats.jobrate.hist.e = e;
+    stats.jobrate.hist.n = n;
+
+    if doplot
+      figure()
+      stairs(e, n);
+      title('Running jobs per hour')
+      xtics = get(gca(), 'xtick');
+      xlabs = arrayfun(@(d) datestr(d,'HH:MM'), xtics, ...
+          'UniformOutput',false);
+      set(gca(), 'xticklabel', xlabs);
+      xlabel(sprintf('Time, %s through %s', ...
+          datestr(xtics(1), 'yyyy/mm/dd HH:MM'), ...
+          datestr(xtics(end), 'yyyy/mm/dd HH:MM')))
+      ylabel('Counts');
+    end
+  end
+
 end
 
