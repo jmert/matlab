@@ -82,8 +82,8 @@ function do_collection()
   % Get the current user name:
   [r,user] = system_safe('whoami'); user = strtrim(user);
 
-  % Filtering to show only past jobs requires a start time, so use yesterday.
-  sttime = datestr(now()-1, 'yyyy-mm-ddTHH:MM:SS');
+  % Filtering to show only past jobs requires a start time, so use last week.
+  sttime = datestr(now()-7, 'yyyy-mm-ddTHH:MM:SS');
   sacctcmd = sprintf('sacct -P --format=ALL -u %s -S "%s" -s CD,F,TO', ...
       user, sttime);
   % Get output from sacct. Then parse the first line to get a list of headings.
@@ -113,10 +113,6 @@ function do_collection()
   id = strmatch('JobID', fields, 'exact');
   jn = strmatch('JobName', fields, 'exact');
 
-  % Pre-allocate so that if info is empty, these two still exist for logic
-  % later.
-  yesterinfo = cell(0,nfields);
-  todayinfo = cell(0,nfields);
   if size(info,1) > 0
     info2 = cell(size(info));
     info2(1,:) = info(1,:);
@@ -144,71 +140,60 @@ function do_collection()
     end
     info = info2(1:cnt,:);
     clear info2;
-
-    % Split the new list by date:
-    sn = strmatch('Start', fields, 'exact');
-    todaystamp = floor(now());
-    yesteridx = find(horzcat(info{:,sn}) < todaystamp);
-    todayidx  = find(horzcat(info{:,sn}) > todaystamp);
-    yesterinfo = info(yesteridx,:);
-    todayinfo  = info(todayidx,:);
-
-    if ~exist('farmfiles/stats','dir')
-      system('mkdir -p farmfiles/stats');
-    end
   end % size(info,1) > 0
 
-  % Load yesterday's statistics file and merge entries which are common:
-  yesterfile = sprintf('farmfiles/stats/%s.mat', datestr(now()-1, 'yyyymmdd'));
-  if exist_file(yesterfile)
-    yesterdata = load(yesterfile);
-  else
-    yesterdata = struct();
-    yesterdata.fields = fields;
-    yesterdata.info = cell(0,nfields);
+  if ~exist('farmfiles/stats','dir')
+    system('mkdir -p farmfiles/stats');
   end
-  % Find the common intersecting IDs and replace with the newest info.
-  cold = ismember(horzcat(yesterdata.info{:,id}), horzcat(yesterinfo{:,id}));
-  cnew = ismember(horzcat(yesterinfo{:,id}), horzcat(yesterdata.info{:,id}));
-  if any(cnew)
-    yesterdata.info(cold,:) = yesterinfo(cnew,:);
-  end
-  % Then append any new entries
-  if any(~cnew)
-    yesterdata.info = vertcat(yesterdata.info, yesterinfo(~cnew,:));
-  end
-  % Sort by ID. Probably not all that useful, but it'll mirror output of
-  % sacct if all info had been available at once.
-  [dum,order] = sort(horzcat(yesterdata.info{:,id}));
-  yesterdata.info = yesterdata.info(order,:);
 
-  % Do the same for today's statistics:
-  todayfile  = sprintf('farmfiles/stats/%s.mat', datestr(now(),   'yyyymmdd'));
-  if exist_file(todayfile)
-    todaydata = load(todayfile);
-  else
-    todaydata = struct();
-    todaydata.fields = fields;
-    todaydata.info = cell(0,nfields);
-  end
-  % Find the common intersecting IDs and replace with the newest info.
-  cold = ismember(horzcat(todaydata.info{:,id}), horzcat(todayinfo{:,id}));
-  cnew = ismember(horzcat(todayinfo{:,id}), horzcat(todaydata.info{:,id}));
-  if any(cnew)
-    todaydata.info(cold,:) = todayinfo(cnew,:);
-  end
-  % Then append any new entries
-  if any(~cnew)
-    todaydata.info = vertcat(todaydata.info, todayinfo(~cnew,:));
-  end
-  % Sort by ID. Probably not all that useful, but it'll mirror output of
-  % sacct if all info had been available at once.
-  [dum,order] = sort(horzcat(todaydata.info{:,id}));
-  todaydata.info = todaydata.info(order,:);
+  % Enumerate which days are needed for all returned jobs. The sorting will
+  % be done based on the submission time.
+  su = strmatch('Submit', fields, 'exact');
+  mindate = min(cell2mat(info(:,su)));
+  maxdate = max(cell2mat(info(:,su)));
 
-  % Save data
-  saveandtest(yesterfile, '-struct', 'yesterdata');
-  saveandtest(todayfile,  '-struct', 'todaydata');
+  % Merge data for all dates that have been retrieved.
+  for dd=floor(mindate+eps()):ceil(maxdate-eps())
+    datefile = sprintf('farmfiles/stats/%s.mat', datestr(dd, 'yyyymmdd'));
+    if exist_file(datefile)
+      datedata = load(datefile);
+    else
+      datedata = struct();
+      datedata.fields = fields;
+      datedata.info = cell(0,nfields);
+    end
+
+    % Identify sacct entries which we've just retrieved that belong to this
+    % date range.
+    datemask = (dd == floor(horzcat(info{:,su})+eps()));
+    dateinfo = info(datemask,:);
+
+    % Pre-empted and requeued jobs get a new submission time, so we want to
+    % remove items from the stored data if a corresponding JobID no longer
+    % matches the submission date for that job.
+    otherinfo = info(~datemask,:);
+    resub = ismember(horzcat(datedata.info{:,id}), horzcat(otherinfo{:,id}));
+    % Cut down to non-resubmitted jobs.
+    datedata.info = datedata.info(~resub,:);
+
+    % Now for overlapping IDs, replace stored data with the newest info.
+    cold = ismember(horzcat(datedata.info{:,id}), horzcat(dateinfo{:,id}));
+    cnew = ismember(horzcat(dateinfo{:,id}), horzcat(datedata.info{:,id}));
+    if any(cnew)
+      datedata.info(cold,:) = dateinfo(cnew,:);
+    end
+    % Then append any new entries which haven't yet been stored.
+    if any(~cnew)
+      datedata.info = vertcat(datedata.info, dateinfo(~cnew,:));
+    end
+    % Sort by ID; probably not all that usefull, but it'll mirror out of
+    % sacct as if all info had been available at once.
+    [dum,order] = sort(horzcat(datedata.info{:,id}));
+    datedata.info = datedata.info(order,:);
+
+    % Save the data
+    saveandtest(datefile, '-struct', 'datedata');
+  end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
