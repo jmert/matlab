@@ -100,15 +100,21 @@ function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
     gb = ceil(stats.memuse.max/1000)*1000;
     e = linspace(0, gb, 101);
     n = histc(horzcat(info{maskcd,nn}), e);
+    na = histc(horzcat(info{maskcd|maskf|maskto,nn}), e);
     stats.memuse.hist.e = e;
     stats.memuse.hist.n = n;
+    stats.memuse.hist.na = na;
 
     if doplot
       figure()
-      stairs(e, n);
+      stairs(e, na, 'color', [0.85,0.85,0.85]);
+      hold on
+      stairs(e, n, 'b');
+      hold off
       title(sprintf('Max memory use - %d jobs', stats.numcomplete))
       xlabel('Memory use [MiB]');
       ylabel('Counts');
+      legend({'all','completed'})
     end
   end
 
@@ -123,15 +129,21 @@ function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
     qhr = ceil(stats.timeuse.max/15)*15;
     e = linspace(0, qhr, 101);
     n = histc(horzcat(info{maskcd,nn}), e);
+    na = histc(horzcat(info{maskcd|maskf|maskto,nn}), e);
     stats.timeuse.hist.e = e;
     stats.timeuse.hist.n = n;
+    stats.timeuse.hist.na = na;
 
     if doplot
       figure()
-      stairs(e, n);
+      stairs(e, na, 'color', [0.85,0.85,0.85]);
+      hold on
+      stairs(e, n, 'b');
+      hold off
       title(sprintf('Run times - %d jobs', stats.numcomplete))
       xlabel('Time elapsed [min]');
       ylabel('Counts');
+      legend({'all','completed'})
     end
   end
 
@@ -142,23 +154,35 @@ function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
     stime = floor(min(horzcat(info{:,st}))*24/6)*6;
     etime = ceil(max(horzcat(info{:,en}))*24/6)*6;
     e = (stime:etime)/24;
-    % Then build a histogram with 1-hour resolution:
+    % Then build a histogram with 1-hour resolution for completed jobs:
     n = zeros(1, etime-stime+1);
     for ii=find(maskcd)
       % Round the individual job start and end time to the nearest hour.
       jobst = floor(info{ii,st}*24);
       joben = ceil(info{ii,en}*24);
-      % Increment within that time span.
       n([jobst:joben]-stime+1) = n([jobst:joben]-stime+1) + 1;
     end
+    % Add stats for failed/timed out jobs to the completed ones for an overall
+    % histogram.
+    na = n;
+    for ii=find(maskf|maskto)
+      % Round the individual job start and end time to the nearest hour.
+      jobst = floor(info{ii,st}*24);
+      joben = ceil(info{ii,en}*24);
+      na([jobst:joben]-stime+1) = na([jobst:joben]-stime+1) + 1;
+    end
 
-    stats.jobrate.max = max(n);
+    stats.jobrate.max = max(na);
     stats.jobrate.hist.e = e;
     stats.jobrate.hist.n = n;
+    stats.jobrate.hist.na = na;
 
     if doplot
       figure()
-      stairs(e, n);
+      stairs(e, na, 'color', [0.85,0.85,0.85]);
+      hold on
+      stairs(e, n, 'b');
+      hold off
       title('Running jobs per hour')
       xtics = get(gca(), 'xtick');
       xlabs = arrayfun(@(d) datestr(d,'HH:MM'), xtics, ...
@@ -168,6 +192,7 @@ function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
           datestr(xtics(1), 'yyyy/mm/dd HH:MM'), ...
           datestr(xtics(end), 'yyyy/mm/dd HH:MM')))
       ylabel('Counts');
+      legend({'all','completed'})
     end
   end
 
