@@ -203,7 +203,7 @@ function jobid=parse_jobid(jobid)
 end
 
 function datetime=parse_datetime(datetime)
-  if strcmp(lower(datetime), 'unknown')
+  if strcmp(lower(datetime), 'unknown') || strcmp(lower(datetime), 'invalid')
     datetime = NaN;
     return
   end
@@ -212,7 +212,7 @@ end
 
 function tspan=parse_timespan(tspan)
   % May be empty if job is still running.
-  if isempty(tspan)
+  if isempty(tspan) || strcmp(lower(tspan), 'invalid')
     tspan = NaN;
     return
   end
