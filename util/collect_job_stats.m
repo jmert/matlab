@@ -5,9 +5,11 @@ function collect_job_stats()
 % farmfiles/stats. The output can be later parsed and analyzed by
 % summarize_job().
 %
+  
+  global DEBUG;
 
   % Make sure we don't stall at a debug prompt if an error occurs:
-  dbclear all
+  if ~DEBUG; dbclear all; end
   try
     do_collection()
   catch ex
