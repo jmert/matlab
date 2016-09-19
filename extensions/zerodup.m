@@ -1,8 +1,23 @@
 function B=zerodup(A)
 % function B=zerodup(A)
 %
-% Create a duplicate of A which has zeroed all elements. An intended use case
-% is to give an "empty" copy which can be replicated with repmat().
+% Create a duplicate of A which has zeroed all elements.
+%
+% INPUTS
+%   A    A structure, cell array, numeric array, string, or any combination
+%        thereof which is to be the template for a zeroed-out copy to be
+%        returned.
+%
+% OUTPUT
+%   B    Data which has the same format as A, but all contents are zeroed
+%        (or for strings, empty). The dimensions are maintained, and sparse
+%        inputs remain sparse. Unrecognized data types emit a warning and
+%        are turned into the empty vector.
+%
+% EXAMPLE
+%
+%   acz = zerodup(ac(1));
+%   acp = repmat(acz, [1 length(ind.a)]);
 %
 
   B = [];
