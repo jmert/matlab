@@ -21,6 +21,9 @@ function C=structmerge(A,B)
   for ff=rvec(fieldnames(B))
     C.(ff{:}) = B.(ff{:});
   end
+end
 
+function v=rvec(v)
+  v = v(:)';
 end
 
