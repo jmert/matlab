@@ -1,5 +1,5 @@
-function val=ifthen(condition, trueval, falseval)
-% val=ifthen(condition, trueval, falseval)
+function val=ifelse(condition, trueval, falseval)
+% val=ifelse(condition, trueval, falseval)
 %
 % Function wrapper around the statement
 %
