@@ -121,6 +121,13 @@ function do_collection()
     cnt = 1;
     mergefields = setdiff(1:nfields, [id,jn]);
     for ii=2:njobs
+      % There is an "extern" step type that can be run and reported for jobs,
+      % but as far as I can tell, it doesn't contain the information we want.
+      % Therefore, skip these lines.
+      if strcmp(info{ii,jn},'extern')
+        continue;
+      end
+
       % Just collect the line if we don't need to merge.
       if info{ii,id} ~= info{ii-1,id} || ~strcmp(info{ii,jn},'batch')
         cnt = cnt + 1;
@@ -201,7 +208,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function jobid=parse_jobid(jobid)
-  jobid = str2num(strrep(jobid,'.batch',''));
+  jobid = strrep(jobid, '.batch', '');
+  jobid = strrep(jobid, '.extern', '');
+  jobid = str2num(jobid);
 end
 
 function datetime=parse_datetime(datetime)
