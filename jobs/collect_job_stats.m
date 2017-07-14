@@ -9,12 +9,16 @@ function collect_job_stats()
   global DEBUG;
 
   % Make sure we don't stall at a debug prompt if an error occurs:
-  if ~DEBUG; dbclear all; end
-  try
+  if ~DEBUG
+    dbclear all
+    try
+      do_collection()
+    catch ex
+      fprintf(2, getReport(ex,'extended','hyperlinks','off'));
+      exit(1)
+    end
+  else
     do_collection()
-  catch ex
-    fprintf(2, getReport(ex,'extended','hyperlinks','off'));
-    exit(1)
   end
 
 end
@@ -39,6 +43,7 @@ function do_collection()
       'CPUTime',          @parse_timespan; ...
       'CPUTimeRAW',       @str2double; ...
       'Elapsed',          @parse_timespan; ...
+      'ElapsedRaw',       @str2double; ...
       'Eligible',         @parse_datetime; ...
       'End',              @parse_datetime; ...
       'GID',              @str2double; ...
@@ -166,6 +171,39 @@ function do_collection()
     datefile = sprintf('farmfiles/stats/%s.mat', datestr(dd, 'yyyymmdd'));
     if exist_file(datefile)
       datedata = load(datefile);
+      % After an upgrade, the fields may change, so deal with possibility.
+      if ~isempty(setxor(datedata.fields, fields))
+        rmfromdisk = setdiff(datedata.fields, fields);
+        if ~isempty(rmfromdisk)
+          rmidxs = cellfun(@(s) strmatch(s, datedata.fields, 'exact'), ...
+              rmfromdisk);
+          mask = true(size(datedata));
+          mask(rmidxs) = false;
+          datedata.fields = datedata.fields(mask);
+          datedata.info   = datedata.info(:, mask);
+        end
+        addtodisk = setdiff(fields, datedata.fields);
+        if ~isempty(addtodisk)
+          addidxs = cellfun(@(s) strmatch(s, fields, 'exact'), addtodisk);
+          [dum,newlocs] = ismember(datedata.fields, fields);
+
+          datedata.infobak = datedata.info;
+          datedata.info = cell(size(datedata.infobak,1), length(fields));
+          datedata.info(:,newlocs) = datedata.infobak;
+          for ii=rvec(addidxs)
+            nn = strmatch(fields{ii}, rvec(handlers(:,1)), 'exact');
+            if ~isempty(nn)
+              [datedata.info{:,ii}] = deal(handlers{nn,2}(''));
+            else
+              [datedata.info{:,ii}] = deal('');
+            end
+          end
+          datedata = rmfield(datedata, 'infobak');
+          datedata.fields = fields;
+          clear newlocs dum addidxs
+        end
+        clear rmfromdisk addtodisk
+      end
     else
       datedata = struct();
       datedata.fields = fields;
