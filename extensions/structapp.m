@@ -1,5 +1,5 @@
-function O=structapp(S1,S2)
-% O=structapp(S1,S2)
+function O=structapp(S1,S2,varargin)
+% O=structapp(S1,S2,...)
 %
 % Appends a structure to a structure array. The fieldnames are chosen such
 % that fieldnames(O) = union(fieldnames(S1), fieldnames(S2)).
@@ -57,6 +57,10 @@ function O=structapp(S1,S2)
         O(nn).(zS2fields{ff}) = zeroS2.(zS2fields{ff});
       end
     end
+  end
+
+  if length(varargin) > 0
+    O = structapp(O, varargin{1}, varargin{2:end});
   end
 end
 
