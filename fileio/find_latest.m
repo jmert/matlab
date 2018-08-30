@@ -1,8 +1,8 @@
-function latest=find_latest(reqdate, base, ext)
-% latest=find_latest(reqdate, base, ext)
+function latest=find_latest(reqdate, base, ext, direc)
+% latest=find_latest(reqdate, base, ext, direc)
 %
-% Find the latest file which has a date suffix which occurs before the
-% requsted date.
+% Find the date-suffixed file which is the immediately prior or next file
+% when compared to the reference date.
 %
 % INPUTS
 %   reqdate    Defaults to datestr(now(), 'yyyymmdd'). Date string as
@@ -14,6 +14,10 @@ function latest=find_latest(reqdate, base, ext)
 %
 %   ext        Defaults to '.csv'; the file extension to ignore from the
 %              suffix.
+%
+%   direc      Defaults to 'before'. If 'before', gives the latest file with
+%              a date suffix not greater than the reference date. If 'after',
+%              gives the first file following the reference date.
 %
 % RETURNS
 %   latest     Path to the latest file consistent with the base naming.
@@ -28,11 +32,14 @@ function latest=find_latest(reqdate, base, ext)
   if ~exist('ext','var') || isempty(ext)
     ext = '.csv';
   end
-  regext = strrep(ext, '.', '\.');
+  if ~exist('direc','var') || isempty(direc)
+    direc = 'before';
+  end
 
   if ischar(reqdate)
     reqdate = str2num(reqdate);
   end
+  regext = strrep(ext, '.', '\.');
 
   % List all matching files
   candids = dir(sprintf('%s*%s', base, ext));
@@ -45,17 +52,26 @@ function latest=find_latest(reqdate, base, ext)
 
   % Get the dates for the remaining files
   dates = cellfun(@(c) str2num(c(end-11:end-4)), candids);
-  % Again, filter for those occuring before the requested date
-  candids = candids(dates <= reqdate);
-
   % Guarantee ordering
   [dates,order] = sort(dates);
   candids = candids(order);
 
-  if ~isempty(candids)
-    latest = fullfile(path, candids{end});
-  else
-    latest = [];
+  switch lower(direc)
+    case 'before'
+      candids = candids(dates <= reqdate);
+      idx = length(candids);
+    case 'after'
+      candids = candids(dates >= reqdate);
+      idx = 1;
+    otherwise
+      error('unrecognized direction ''%s''', direc)
   end
+
+  if isempty(candids)
+    latest = [];
+  else
+    latest = fullfile(path, candids{idx});
+  end
+
 end
 
