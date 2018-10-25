@@ -5,9 +5,6 @@ function path=mkdatapath()
 % and creates the directory, if necessary.
 %
 
-  path = datapath();
-  if ~exist(path, 'dir')
-    system(['mkdir -p ' path]);
-  end
+  path = mkdir_p(datapath());
 end
 
