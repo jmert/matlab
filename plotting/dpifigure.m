@@ -77,11 +77,13 @@ function varargout=dpifigure(varargin)
   % rendered fonts' sizes depending on your system DPI. This is terrible for
   % reproducible plots across systems, so instead we'll try adopting TeX's
   % definition of a point where 1 in == 72.27 pt. Specify a default font
-  % size in TeX points (as inches to Matlab).
-  set(fig, 'defaultAxesFontUnits', 'inches');
-  set(fig, 'defaultTextFontUnits', 'inches');
-  set(fig, 'defaultAxesFontSize', opts.FontSize / 72.27);
-  set(fig, 'defaultTextFontSize', round(1.15*opts.FontSize) / 72.27);
+  % size interpreted as TeX points (i.e. scale by ratio betwen TeX and current
+  % screen pixels per inch).
+  ppi = get(groot(), 'ScreenPixelsPerInch');
+  ratio = 72.27 / ppi;
+  set(fig, ...
+      'defaultAxesFontSize', opts.FontSize * ratio, ...
+      'defaultTextFontSize', 1.15*opts.FontSize * ratio);
 
   % Default figure color is white.
   set(fig, 'Color', [1 1 1]);
@@ -107,15 +109,15 @@ function varargout=dpifigure(varargin)
     varargout{2} = setup_axes(opts.dim);
   else
     % Set physical and on-screen dimensions to match
+    drawnow();
     p = get(fig, 'Position');
+    set(fig, 'PaperSize',         [opts.FigW opts.FigH], ...
+             'PaperPosition', [0 0 opts.FigW opts.FigH]);
+    drawnow();
     set(fig, 'Position', [p(1) p(2) opts.FigW opts.FigH]);
-    set(fig, 'PaperSize', [opts.FigW opts.FigH]);
-    set(fig, 'PaperPosition', [0 0 opts.FigW opts.FigH]);
   end
   if ~opts.Resize
     set(fig, 'Resize', 'off');
   end
-
-  drawnow();
 end
 

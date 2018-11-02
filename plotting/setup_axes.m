@@ -72,10 +72,13 @@ function ax=setup_axes(dim)
   % Arrange the figure/paper correctly.
   clf();
   set(gcf, 'Units','inches');
+  drawnow();
   p = get(gcf, 'Position');
+  set(gcf, 'PaperUnits', 'inches');
+  set(gcf, 'PaperSize',         [dim.W dim.H], ...
+           'PaperPosition', [0 0 dim.W dim.H]);
+  drawnow();
   set(gcf, 'Position', [p(1), p(2)+p(4)-dim.H, dim.W, dim.H])
-  set(gcf, 'PaperUnits', 'inches', 'PaperPosition', [0 0 dim.W dim.H]);
-  set(gcf, 'PaperSize', [dim.W dim.H]);
   clear p;
 
   ax = cell(ht,wd);
