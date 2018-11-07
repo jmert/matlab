@@ -18,6 +18,15 @@ function path=datapath()
       path = fullfile('temp', project{1});
       return
     end
+    % Support use of a function handle to a subfunction of script
+    [dname,fname,fext] = fileparts(st(ii).file);
+    if ~strcmp(fname, callername)
+      project = regexpi(fname, '^(S\d{4})(?=_)', 'match');
+      if length(project) == 1 && ~isempty(project{1})
+        path = fullfile('temp', project{1});
+        return
+      end
+    end
   end
 
   error('could not automatically construct data path')
