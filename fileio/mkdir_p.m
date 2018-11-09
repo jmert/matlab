@@ -9,7 +9,7 @@ function path=mkdir_p(path)
   while true
     [path,part] = fileparts(path);
     comps{end+1} = part;
-    if isempty(path)
+    if isempty(path) || isrootpath(path)
       break
     end
   end
@@ -19,5 +19,13 @@ function path=mkdir_p(path)
     if ~exist(path, 'dir')
       mkdir(path)
     end
+  end
+end
+
+function tf=isrootpath(path)
+  if isunix()
+    tf = strcmp(path, '/');
+  else
+    tf = strcmp(path(2:end), ':\');
   end
 end
