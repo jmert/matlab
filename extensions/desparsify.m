@@ -17,8 +17,6 @@ function st=desparsify(st)
 %   ac = desparsify(ac);
 %
 
-  fnames = fieldnames(st);
-
   % Recursively call this function for all elements of a structure array.
   if numel(st) > 1
     for ii=1:numel(st)
@@ -26,6 +24,8 @@ function st=desparsify(st)
     end
     return
   end
+
+  fnames = fieldnames(st);
 
   % We'll only get here for a "scalar" structure
   for f=1:length(fnames)

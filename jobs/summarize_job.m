@@ -91,10 +91,10 @@ function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
 
   nn = strmatch('MaxVMSize', fields, 'exact');
   if ~isempty(nn)
-    stats.memuse.avg = mean(horzcat(info{maskcd,nn}));
-    stats.memuse.max = max(horzcat(info{maskcd,nn}));
-    stats.memuse.used = sum(horzcat(info{maskcd,nn}));
-    stats.memuse.wasted = sum(horzcat(info{maskf|maskto,nn}));
+    stats.memuse.avg = nanmean(horzcat(info{maskcd,nn}));
+    stats.memuse.max = nanmax(horzcat(info{maskcd,nn}));
+    stats.memuse.used = nansum(horzcat(info{maskcd,nn}));
+    stats.memuse.wasted = nansum(horzcat(info{maskf|maskto,nn}));
 
     % Find an even number of base-10 gigabytes to histogram across.
     gb = ceil(stats.memuse.max/1000)*1000;
@@ -120,10 +120,10 @@ function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
 
   nn = strmatch('CPUTime', fields, 'exact');
   if ~isempty(nn)
-    stats.timeuse.avg = mean(horzcat(info{maskcd,nn}));
-    stats.timeuse.max = max(horzcat(info{maskcd,nn}));
-    stats.timeuse.used = sum(horzcat(info{maskcd,nn}));
-    stats.timeuse.wasted = sum(horzcat(info{maskf|maskto,nn}));
+    stats.timeuse.avg = nanmean(horzcat(info{maskcd,nn}));
+    stats.timeuse.max = nanmax(horzcat(info{maskcd,nn}));
+    stats.timeuse.used = nansum(horzcat(info{maskcd,nn}));
+    stats.timeuse.wasted = nansum(horzcat(info{maskf|maskto,nn}));
 
     % Find nearest quarter hour to histogram across.
     qhr = ceil(stats.timeuse.max/15)*15;

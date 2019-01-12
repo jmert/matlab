@@ -29,6 +29,7 @@ function colorbar_axis(cbar,clim,varargin)
 %
 
   p = inputParser();
+  p.KeepUnmatched = true;
   p.FunctionName = 'colorbar_axis';
   addOptional(p, 'FontSize', 0.75 * get(cbar, 'FontSize'));
   addOptional(p, 'Title', []);

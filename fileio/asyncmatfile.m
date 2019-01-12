@@ -1,18 +1,32 @@
 classdef asyncmatfile < handle
-  properties (Access = private)
+  properties (GetAccess = public, SetAccess = protected)
     hasworker
     hmatfile
     future
   end
 
   methods
-    function self = asyncmatfile(path,varargin)
+    function self = asyncmatfile(filename,varargin)
+    % hmat = asyncmatfile(filename,varargin)
+    %
+    % Wrapper around matfile() implementing a simple asynchronous I/O protocol
+    % by making use of a parallel pool worker. If no pool exists, the I/O is
+    % completed serially.
+
       self.hasworker = exist('gcp') && ~isempty(gcp('nocreate'));
-      self.hmatfile = matfile(path, varargin{:});
+      self.hmatfile = matfile(filename, varargin{:});
       self.future = [];
     end
 
     function v = get(self, f)
+      if nargin == 1
+        f = properties(self);
+        v = struct();
+        for ii = 1:length(f)
+          v.(f{ii}) = get(self, f{ii});
+        end
+        return
+      end
       v = builtin('subsref', self, substruct('.', f));
     end
 
@@ -21,17 +35,6 @@ classdef asyncmatfile < handle
     end
 
     function O = subsref(self,S)
-      %% Special cases first
-      %if S.type == '.' && length(S) == 1
-      %  switch S.subs
-      %    case {'hmatfile', 'future'}
-      %      O = get(self, S.subs);
-      %      return
-      %    otherwise
-      %      % Fall through to letting hmatfile handle anything else
-      %  end
-      %end
-
       hmatfile = get(self, 'hmatfile');
       if ~get(self, 'hasworker')
         O = subsref(hmatfile, S);
