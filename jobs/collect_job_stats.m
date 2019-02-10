@@ -5,11 +5,11 @@ function collect_job_stats()
 % farmfiles/stats. The output can be later parsed and analyzed by
 % summarize_job().
 %
-  
+
   global DEBUG;
 
   % Make sure we don't stall at a debug prompt if an error occurs:
-  if ~DEBUG
+  if isempty(DEBUG) || ~DEBUG
     dbclear all
     try
       do_collection()
@@ -304,7 +304,8 @@ function dsize=parse_datasize(dsize)
   % Currently the framework can only deal with per-node memory allocations.
   % Do a sanity check to make sure we don't see a per-CPU spec.
   if dsize(end) == 'c'
-    error('Per-CPU memory requests cannot be parsed.');
+    warning('Per-CPU memory requests cannot be parsed.');
+    dsize = dsize(1:end-1);
   end
   % Only the ReqMem field includes the n, so strip it off to make the rest of
   % the routine work generically for measured sizes as well.
