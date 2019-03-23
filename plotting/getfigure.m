@@ -4,5 +4,6 @@ function h=getfigure(name)
     h = figure();
     set(h, 'Name', name);
   end
+  set(groot(), 'CurrentFigure', h);
 end
 
