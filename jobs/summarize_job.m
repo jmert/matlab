@@ -98,6 +98,9 @@ function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
 
     % Find an even number of base-10 gigabytes to histogram across.
     gb = ceil(stats.memuse.max/1000)*1000;
+    if isempty(gb)
+      gb = nanmax(horzcat(info{maskf|maskto,nn}));
+    end
     e = linspace(0, gb, 101);
     n = histc(horzcat(info{maskcd,nn}), e);
     na = histc(horzcat(info{maskcd|maskf|maskto,nn}), e);
@@ -127,6 +130,9 @@ function [stats,fields,info]=summarize_job(jobregex,datebegin,dateend,doplot)
 
     % Find nearest quarter hour to histogram across.
     qhr = ceil(stats.timeuse.max/15)*15;
+    if isempty(qhr)
+      qhr = nanmax(horzcat(info{maskf|maskto,nn}));
+    end
     e = linspace(0, qhr, 101);
     n = histc(horzcat(info{maskcd,nn}), e);
     na = histc(horzcat(info{maskcd|maskf|maskto,nn}), e);
