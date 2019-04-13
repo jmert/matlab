@@ -19,6 +19,15 @@ function setfigsize(fig, w, h)
   p(4) = h;
   set(fig, 'Position', p);
 
+  % Matlab sometimes brings up the figure with a size different from what
+  % has been set. (Anecdotally, when the figure is first being created in a
+  % script that immediately starts plotting.) Force a draw sync, and then
+  % check that the size actually matches.
+  drawnow();
+  if any(get(fig, 'Position') ~= p)
+    set(fig, 'Position', p);
+  end
+
   % Save current paper units
   punits = get(fig, 'PaperUnits');
   set(fig, 'PaperUnits', get(fig, 'Units'));
