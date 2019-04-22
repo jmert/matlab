@@ -7,17 +7,22 @@ function cmap=colormap_interp(cmap,n)
 % interpolation happens in RGB space instead.)
 %
 
+  m = size(cmap,1);
+  if m == n
+    return
+  end
+
   labinterp = true;
   try
     cmap = rgb2lab(cmap);
   catch
     labinterp = false;
   end
-
-  m = size(cmap,1);
   cmap = interp1(linspace(1, n, m), cmap, 1:n);
-
   if labinterp
     cmap = lab2rgb(cmap);
+    % clamp within range
+    cmap(cmap < 0) = 0;
+    cmap(cmap > 1) = 1;
   end
 end
