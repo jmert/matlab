@@ -1,6 +1,6 @@
 function prepare_plotting()
   ud = get(groot(), 'UserData');
-  if isempty(ud) || (ischar(ud) && ~strcmp(ud, 'prepare_plotting'))
+  if isempty(ud) || (ischar(ud) && ~strcmp(ud, 'setup_plotting'))
     % Clear all custom parameters before manipulating.
     close all
   end
@@ -15,7 +15,7 @@ function prepare_plotting()
   setmanual('defaultFigureUnits', 'inches', ...
             'defaultFigurePaperUnits', 'inches');
 
-  % Decrease all the font sizes
+  % Make sure font sizes are fixed at known sizes
   setmanual('defaultAxesFontSize', 10, ...
             'defaultTextFontSize', 10, ...
             'defaultLegendFontSize', 8, ...
@@ -41,7 +41,7 @@ function prepare_plotting()
   % Use renderer compatible with saving vectorized PDFs by default.
   setmanual('defaultFigureRenderer', 'painters');
 
-  set(groot(), 'UserData', 'prepare_plotting');
+  set(groot(), 'UserData', 'setup_plotting');
 end
 
 function setmanual(varargin)
