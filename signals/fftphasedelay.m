@@ -27,7 +27,7 @@ function dly = fftphasedelay(H, samprate, N)
 if ~exist('N','var') || isempty(N)
   N = length(H);
 end
-ph = unwrap(angle(H(:)'));
+ph = unwrap(angle(H(:).'));
 fq = 2*pi*samprate * [0:(length(H)-1)] ./ N;
 dly = -ph ./ fq;
 % assuming the DC phase delta is the same as the next
