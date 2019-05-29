@@ -1,5 +1,5 @@
-function ax=setup_axes(dim)
-% ax=setup_axes(dim)
+function ax=setup_axes(dim, fig)
+% ax=setup_axes(dim, fig)
 %
 % Sets up a figure with a particular size (in inches) and arranges a series
 % of axes within the figure according to a set of grid dimensions.
@@ -25,6 +25,8 @@ function ax=setup_axes(dim)
 %                  member of the row or column to the full desired size, and
 %                  then the spanned cells should have empty dimensions to
 %                  suppress having an axis drawn in that position.
+%
+%   fig    Defaults to gcf(). Figure handle to operate upon.
 %
 % OUTPUTS
 %
@@ -58,6 +60,10 @@ function ax=setup_axes(dim)
 %   ax = setup_axes(dim);
 %
 
+  if ~exist('fig','var') || isempty(fig)
+    fig = gcf();
+  end
+
   % Make sure we can actually construct a proper grid.
   if ~all(size(dim.x) == size(dim.y))
     error('X and Y grids have incompatible sizes.')
@@ -70,9 +76,9 @@ function ax=setup_axes(dim)
   dim.y = cellfun(@(c) c ./ dim.H, dim.y, 'uniformoutput', false);
 
   % Arrange the figure/paper correctly.
-  clf();
-  set(gcf, 'Units','inches');
-  setfigsize(gcf, dim.W, dim.H);
+  clf(fig);
+  set(fig, 'Units','inches');
+  setfigsize(fig, dim.W, dim.H);
 
   ax = cell(ht,wd);
 
@@ -89,7 +95,7 @@ function ax=setup_axes(dim)
         continue
       end
 
-      ax{jj,ii} = axes('Position', [x(1), y(1), diff(x), diff(y)]);
+      ax{jj,ii} = axes(fig, 'Position', [x(1), y(1), diff(x), diff(y)]);
     end
   end
 end
