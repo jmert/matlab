@@ -17,6 +17,7 @@
 # General
 external/
 test/
+**/.ipynb_checkpoints/
 
 # 1702_keck2014_abscal
 1702_keck2014_abscal/planck_smooth/*.fits
