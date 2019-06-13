@@ -45,6 +45,31 @@ val = data(idx);
 val = data(take(2, @max, aux));
 ```
 
+* Splatting arguments (see [Julia](https://docs.julialang.org/en/v1/base/base/#...)
+or [Python](https://www.python.org/dev/peps/pep-0448/) variations) is
+inconsistent in Matlab. You can splat cell arrays,
+
+```matlab
+tmp = {-1, 1};
+fprintf('%0.2f\n', -Inf, tmp{:}, Inf);
+```
+
+or fields from a struct array,
+
+```matlab
+S = struct('a', {-1, 1});        % length(S) == 2
+fprintf('%0.2f\n', -Inf, S.a, Inf);
+```
+
+but you cannot do the same with numerical arrays. Furthermore, the lack of
+unique syntax on the structure splatting is an easy way to generate bugs if
+you expect `S` to be a scalar but it ends up being an array:
+
+```matlab
+S = struct('color', {'r', 'b'});   % Assumed to be scalar structure...
+plot([0 1], [0 1], S.color)        % Errors!
+```
+
 # Functions
 
 - Anonymous functions are limited to being single expressions. This motivates
