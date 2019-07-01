@@ -31,7 +31,7 @@ function colorbar_axis(cbar,clim,varargin)
   p = inputParser();
   p.KeepUnmatched = true;
   p.FunctionName = 'colorbar_axis';
-  addOptional(p, 'FontSize', 0.75 * get(cbar, 'FontSize'));
+  addOptional(p, 'FontSize', 0.75 * get(groot(), 'defaultAxesFontSize'));
   addOptional(p, 'Title', []);
   parse(p, varargin{:});
   opts = p.Results;
@@ -46,6 +46,12 @@ function colorbar_axis(cbar,clim,varargin)
   if ~isempty(opts.Title)
     set(get(cbar,'YLabel'), 'String', opts.Title);
   end
+  props = get(cbar, 'UserData');
+  if ~isstruct(props)
+    props = struct();
+  end
+  props.Colorbar = true;
+  set(cbar, 'UserData', props);
 end
 
 
