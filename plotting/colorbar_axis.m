@@ -32,13 +32,24 @@ function colorbar_axis(cbar,clim,varargin)
   p.KeepUnmatched = true;
   p.FunctionName = 'colorbar_axis';
   addOptional(p, 'FontSize', 0.75 * get(groot(), 'defaultAxesFontSize'));
+  addOptional(p, 'Scale', 'linear');
   addOptional(p, 'Title', []);
   parse(p, varargin{:});
   opts = p.Results;
 
-  cdata = repmat(linspace(clim(1), clim(2), 256)', 1, 2);
-  imagesc(cbar, 1:2, cdata(:,1), cdata);
-  set(cbar, 'YDir', 'normal');
+  switch lower(deblank(opts.Scale))
+    case 'linear'
+      yvals = linspace(clim(1), clim(2), 256);
+      cdata = yvals;
+    case 'log'
+      yvals = logspace(clim(1), clim(2), 256);
+      cdata = log10(yvals);
+  end
+  cdata = repmat(cdata', 1, 2);
+  xvals = repmat(1:2, 256, 1);
+  surf = pcolor(cbar, 1:2, yvals, cdata);
+  set(surf, 'EdgeColor', 'none', 'LineStyle', 'none');
+  set(cbar, 'YScale', opts.Scale);
   set(cbar, 'XTick', [], 'XTickLabel', []);
   set(cbar, 'YAxisLocation', 'right');
 
