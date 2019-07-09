@@ -70,6 +70,33 @@ S = struct('color', {'r', 'b'});   % Assumed to be scalar structure...
 plot([0 1], [0 1], S.color)        % Errors!
 ```
 
+# REPL
+The **R**ead, **E**xecute, **P**rint **L**oop
+
+- Proper functions cannot be created at the REPL. Instead, you **must** create
+a file somewhere in the PATH to have anything that encapsulates more than a
+single expression.
+
+- The command history is line based, not statement based — multiline statements
+are broken up and must be retrieved from the history one at a time.
+
+- The REPL doesn't understand bracketed pasting (e.g. [bracketed-paste][]).
+If there's a syntax anywhere within a block of pasted code, execution does not
+stop but instead continues despite what may be guaranteed to be a continuing
+slew of further errors. (The "work-around" is to manually type `if true` before
+pasting and ending the `if`-block.)
+
+- Matlab doesn't know how to filter out it's own prompt, so you cannot simply
+copy-paste previous commands back into the REPL; the `>>` prefix must be manually
+removed from every line.
+
+- In recent versions of Matlab, the debug REPL will nest itself in an unclear
+number of debug levels if any error occurs (while `dbstop if true`). This is
+*not* reflected in the stack trace, so quitting to a specific state may involve
+a sequence of `dbquit` and `dbstack` calls to see when you've finally reached
+the desired state. (This is especially problematic given the bracketed paste
+issue...)
+
 # Functions
 
 - Anonymous functions are limited to being single expressions. This motivates
@@ -86,10 +113,6 @@ autoclim = @(scale,data) caxis([ ...
 ```
 
 non-trivial anonoymous functions are only used because...
-
-- Proper functions cannot be created at the REPL. Instead, you **must** create
-a file somewhere in the PATH to have anything that encapsulates more than a
-single expression.
 
 - Lack of keyword arguments leads to the "key-value" convention used in many
 functions, but it conflates keys with strings. This makes common constructs
@@ -169,3 +192,5 @@ codepoint:
 % lbl = '90°'
 lbl = ['90' char(176)];
 ```
+
+[bracketed-paste]: https://cirw.in/blog/bracketed-paste
