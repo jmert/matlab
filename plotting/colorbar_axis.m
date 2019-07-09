@@ -1,37 +1,49 @@
-function colorbar_axis(cbar,clim,varargin)
+function colorbar_axis(cbar, clim, varargin)
 % colorbar_axis(cbar, clim, varargin)
 %
 % Transfroms the axis cbar into a colorbar-like axis by rendering a gradient
 % and setting auxiliary properties (such as right-side labels, smaller font,
-% etc).
+% etc). Motivated by the fact that Matlab's built-in colorbars must be attached
+% to an axis object, but by doing so, the axis is resized to accomodate the
+% colorbar; therefore, getting absolute positioning of builtin colorbars
+% is difficult.
 %
 % INPUTS
-%   cbar     An axis handle to be used as the colorbar.
+%   cbar      An axis handle to be used as the colorbar.
 %
-%   clim     Color axis limits to be used.
+%   clim      Color axis limits to be used.
 %
-% EXAMPLE
+%   varargin  Key-value option pairs. See OPTIONAL ARGUMENTS below.
 %
-%   dim = get_default_dim();
+% OPTIONAL ARGUMENTS
 %
-%   dim.W = 6.5;
-%   wd = dim.W - 2*dim.wide - 2*dim.med - dim.cbar - dim.thin;
-%   dim.x{1,1} = dim.wide+dim.med + [0, wd];
-%   dim.y{1,1} = dim.wide+dim.med + [0, wd];
-%   dim.x{1,2} = dim.x{1,1}(2) + dim.thin + [0, dim.cbar];
-%   dim.y{1,2} = dim.y{1,1};
-%   dim.H = dim.y{1,1}(2) + dim.wide;
+%   FontSize
+%     Defaults to 75% of the default axis font size. Sets the size of fonts
+%     used on the vertical axis.
 %
-%   [fig,axs] = dpifigure(dim);
-%   nanimagesc(axs{1,1}, -25:25, -25:25, randn(51,51));
-%   colorbar_axis(axs{1,2}, exp(1/2) * [-1,1]);
-%   colormap gray
+%   Scale
+%     Defaults to 'linear'. To use a logarithmic color scale, set to 'log',
+%     in which case clim should be the logarithmic endpoint values; i.e.
+%     clim = [-3 0] to have a logarithmic scale from 1e-3 to 1.
 %
+%   Title
+%     Defaults to []. If not empty, the y-axis label for the colorbar axis
+%     is set the given title string.
+
+  props = get(cbar, 'UserData');
+  if ~isstruct(props)
+    props = struct();
+  end
+  if isfieldset(props, 'FontSize')
+    deffont = props.FontSize;
+  else
+    deffont = 0.75 * get(groot(), 'defaultAxesFontSize');
+  end
 
   p = inputParser();
   p.KeepUnmatched = true;
   p.FunctionName = 'colorbar_axis';
-  addOptional(p, 'FontSize', 0.75 * get(groot(), 'defaultAxesFontSize'));
+  addOptional(p, 'FontSize', deffont);
   addOptional(p, 'Scale', 'linear');
   addOptional(p, 'Title', []);
   parse(p, varargin{:});
@@ -59,11 +71,8 @@ function colorbar_axis(cbar,clim,varargin)
   if ~isempty(opts.Title)
     set(get(cbar,'YLabel'), 'String', opts.Title);
   end
-  props = get(cbar, 'UserData');
-  if ~isstruct(props)
-    props = struct();
-  end
   props.Colorbar = true;
+  props.FontSize = opts.FontSize;
   set(cbar, 'UserData', props);
 end
 
