@@ -41,15 +41,17 @@ function colorbar_axis(cbar,clim,varargin)
     case 'linear'
       yvals = linspace(clim(1), clim(2), 256);
       cdata = yvals;
+      cdata = repmat(cdata', 1, 2);
+      imagesc(cbar, 1:2, yvals, cdata);
+      set(cbar, 'YDir', 'normal');
     case 'log'
       yvals = logspace(clim(1), clim(2), 256);
       cdata = log10(yvals);
+      cdata = repmat(cdata', 1, 2);
+      surf = pcolor(cbar, 1:2, yvals, cdata);
+      set(surf, 'EdgeColor', 'none', 'LineStyle', 'none');
+      set(cbar, 'YScale', opts.Scale);
   end
-  cdata = repmat(cdata', 1, 2);
-  xvals = repmat(1:2, 256, 1);
-  surf = pcolor(cbar, 1:2, yvals, cdata);
-  set(surf, 'EdgeColor', 'none', 'LineStyle', 'none');
-  set(cbar, 'YScale', opts.Scale);
   set(cbar, 'XTick', [], 'XTickLabel', []);
   set(cbar, 'YAxisLocation', 'right');
 
