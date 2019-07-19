@@ -193,4 +193,38 @@ codepoint:
 lbl = ['90' char(176)];
 ```
 
+# Plotting
+- Dash length on dashed lines cannot be explicitly controlled; instead it
+is implicitly decided by your current monitor DPI.
+
+- Plotting is an order of magnitude or two slower when X11 is connected
+versus startup with the `-nodisplay` option (or by setting `DISPLAY=`
+in the environment before launching).
+
+- Plots are not reproducable for the same script across computers of
+different display DPIs. When a bug report was submitted to Mathworks, they
+claimed this was a feature, not a bug (in the WYSIWYG sense).
+
+- You cannot save a PDF with text using anything other than the base
+PostScript fonts.
+
+- Plots with text interpreted by the TeX interpreter will often have
+weird spacing once saved to PDF. No clue why, and no apparent way to fix
+or work around it.
+
+- Setting a figure active with `figure(fig_handle)` steals your desktop's
+focus from whatever already had it.
+
+- You cannot create a figure larger than your display, even if it is a
+`Visible = 'off'` figure. But it is allowed in no-display mode.
+
+- `imagesc` seems to implicitly downsample any image you provide it after
+some unspecified dimension threshold, even if you've contrived to form
+a figure which would be big enough to show the data pixel-by-pixel.
+
+- Sizing a figure works inconsistently if it's also being created for
+the first time. Once fully shown, it often has a size that's only an
+approximation of what was requested. See
+[`plotting/setfigsize.m`](plotting/setfigsize.m).
+
 [bracketed-paste]: https://cirw.in/blog/bracketed-paste
