@@ -44,6 +44,7 @@ function colorbar_axis(cbar, clim, varargin)
   p.KeepUnmatched = true;
   p.FunctionName = 'colorbar_axis';
   addOptional(p, 'FontSize', deffont);
+  addOptional(p, 'Interpreter', 'tex');
   addOptional(p, 'Scale', 'linear');
   addOptional(p, 'Title', []);
   parse(p, varargin{:});
@@ -69,7 +70,9 @@ function colorbar_axis(cbar, clim, varargin)
 
   set(cbar, 'FontSize', opts.FontSize);
   if ~isempty(opts.Title)
-    set(get(cbar,'YLabel'), 'String', opts.Title);
+    set(get(cbar,'YLabel'), ...
+        'Interpreter', opts.Interpreter, ...
+        'String', opts.Title);
   end
   props.Colorbar = true;
   props.FontSize = opts.FontSize;
