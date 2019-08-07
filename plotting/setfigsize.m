@@ -40,7 +40,7 @@ function fuckyoumatlab(w, h, self, varargin)
   drawnow()
   pos = get(self, 'Position');
   wh  = pos(3:4);
-  if ~isequal(wh, [w h])
+  if ~isapprox(wh, [w h])
     pos(1:2) = max([0 0], pos(1:2));
     pos(3:4) = [w h];
     set(self, 'Position', pos)
