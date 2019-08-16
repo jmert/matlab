@@ -8,4 +8,10 @@ function S = loadt(fname, varargin)
   tic()
   S = load(fname, varargin{:});
   toc()
+
+  if nargout < 1
+    for ff = rvec(fieldnames(S))
+      assignin('caller', ff{:}, S.(ff{:}));
+    end
+  end
 end
