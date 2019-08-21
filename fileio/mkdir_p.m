@@ -5,6 +5,9 @@ function path=mkdir_p(path)
 % the path if necessary.
 %
 
+  if exist(path, 'dir')
+    return
+  end
   comps = {};
   while true
     [path,part] = fileparts(path);
