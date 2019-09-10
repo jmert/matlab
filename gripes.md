@@ -1,5 +1,10 @@
 A list of my many gripes with Matlab.
 
+# Product
+- There is no supported method to disable Toolboxes:
+  1. Function namespace clashes are likely as new Toolboxes are developed, so your code may spontaneously break, with no way to override/disable. (Hello `euler` from the Symbolic Toolbox...)
+  2. There's no way to test that your code hasn't gained another Toolbox as a dependency without copying to another computer with a smaller installation and testing there.
+
 # Syntax
 
 - No requirement for parentheses when no arguments passed, making the call
