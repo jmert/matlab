@@ -18,8 +18,11 @@ function colorbar_axis(cbar, clim, varargin)
 % OPTIONAL ARGUMENTS
 %
 %   FontSize
-%     Defaults to 75% of the default axis font size. Sets the size of fonts
-%     used on the vertical axis.
+%     Defaults to 75% of the default axis font size ('defaultAxesFontSize').
+%     Sets the size of fonts used on the vertical axis.
+%
+%   Interpreter
+%     Defaults to the default interpreter ('defaultTextInterpreter').
 %
 %   Scale
 %     Defaults to 'linear'. To use a logarithmic color scale, set to 'log',
@@ -39,12 +42,13 @@ function colorbar_axis(cbar, clim, varargin)
   else
     deffont = 0.75 * get(groot(), 'defaultAxesFontSize');
   end
+  definterp = get(groot(), 'defaultTextInterpreter');
 
   p = inputParser();
   p.KeepUnmatched = true;
   p.FunctionName = 'colorbar_axis';
   addOptional(p, 'FontSize', deffont);
-  addOptional(p, 'Interpreter', 'tex');
+  addOptional(p, 'Interpreter', definterp);
   addOptional(p, 'Scale', 'linear');
   addOptional(p, 'Title', []);
   parse(p, varargin{:});
