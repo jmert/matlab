@@ -232,4 +232,17 @@ the first time. Once fully shown, it often has a size that's only an
 approximation of what was requested. See
 [`plotting/setfigsize.m`](plotting/setfigsize.m).
 
+# Miscellaneous
+- `str2num` is apparently effectively implemented as
+`try; num = eval(str); catch; num = []; end` since a string which
+happens to be a function name is executed:
+
+```matlab
+>> str2num('struct')
+
+ans =
+
+  struct with no fields.
+```
+
 [bracketed-paste]: https://cirw.in/blog/bracketed-paste
