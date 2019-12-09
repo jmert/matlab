@@ -95,7 +95,12 @@ function ax=setup_axes(dim, fig)
         continue
       end
 
-      ax{jj,ii} = axes(fig, 'Position', [x(1), y(1), diff(x), diff(y)]);
+      try
+        ax{jj,ii} = axes(fig, 'Position', [x(1), y(1), diff(x), diff(y)]);
+      catch
+        set(0, 'CurrentFigure', fig);
+        ax{jj,ii} = axes('Position', [x(1), y(1), diff(x), diff(y)]);
+      end
     end
   end
 end
